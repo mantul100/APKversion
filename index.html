@@ -12,8 +12,6 @@
     body { user-select: none; -webkit-user-select: none; background: #f3f4f6; }
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
-    .toast-custom { animation: slideUp 0.3s ease-out; }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
 <body class="font-sans antialiased h-screen overflow-x-hidden">
@@ -73,10 +71,8 @@
       <button onclick="bukaHalaman('pageLaporan'); muatLaporan();" id="tabLaporan" class="tab-btn text-gray-400 border-b-4 border-transparent admin-only"><i class="fa-solid fa-chart-pie tab-icon"></i> Laporan</button>
     </div>
 
-    <!-- HALAMAN 1: KASIR PRO (Multi-Gudang & Multi-Harga) -->
+    <!-- HALAMAN 1: KASIR PRO -->
     <div id="pageKasir" class="p-4 block">
-      
-      <!-- Kontrol Gudang & Kelompok Harga -->
       <div class="bg-white p-3 rounded-2xl shadow-sm mb-3 grid grid-cols-2 gap-2 border-t-4 border-orange-500">
         <div>
           <label class="text-[9px] font-bold text-gray-400 uppercase">Pilih Gudang / Cabang</label>
@@ -128,7 +124,7 @@
       </div>
     </div>
 
-    <!-- HALAMAN 3: MASTER PRODUK (Auto Barcode & Multi-Harga) -->
+    <!-- HALAMAN 3: MASTER PRODUK -->
     <div id="pageTambah" class="p-4 hidden">
       <div class="bg-white rounded-2xl shadow-sm p-4 border-t-4 border-green-500">
         <h1 class="text-lg font-bold text-gray-800 text-center">Tambah Produk Baru</h1>
@@ -181,7 +177,7 @@
     </div>
   </div>
 
-  <!-- ================= JAVASCRIPT PRO ================= -->
+  <!-- ================= JAVASCRIPT PRO (ANTI-CORS GET) ================= -->
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbyWZvWv1DTxILqNYCVVcyaA-DHSVuIsStpqd20KLly2Tc0ZnSEFie8XlU3lnzvKQicP/exec";
 
@@ -202,18 +198,12 @@
     function callAPI(action, data = {}, sheetId = null) {
       return new Promise((resolve, reject) => {
         const payload = { action, sheetId, data };
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', API_URL, true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
+        const url = API_URL + "?data=" + encodeURIComponent(JSON.stringify(payload));
         
-        xhr.onload = function() {
-          if (xhr.status === 200) {
-            try { resolve(JSON.parse(xhr.responseText)); } 
-            catch (e) { reject(new Error("Format JSON tidak valid")); }
-          } else { reject(new Error("HTTP Error " + xhr.status)); }
-        };
-        xhr.onerror = () => reject(new Error("Koneksi jaringan gagal"));
-        xhr.send(JSON.stringify(payload));
+        fetch(url)
+          .then(res => res.json())
+          .then(resData => resolve(resData))
+          .catch(err => reject(new Error("Koneksi jaringan gagal")));
       });
     }
 
@@ -287,7 +277,6 @@
       if(id === 'pageLaporan') document.getElementById('tabLaporan').className = "tab-btn text-purple-500 border-b-4 border-purple-500";
     }
 
-    // --- KASIR PRO ---
     async function muatProdukKasir() {
       var gudang = document.getElementById('pilihGudang').value;
       document.getElementById('statusLoadingKasir').style.display = 'block';
@@ -304,7 +293,7 @@
     }
 
     function renderGridProduk(data) {
-      var jenisHarga = document.getElementById('pilihJenisHarga').value; // hargaUmum / hargaGrosir / hargaMember
+      var jenisHarga = document.getElementById('pilihJenisHarga').value;
       var html = data.map(i => {
         var hargaPilih = i[jenisHarga] || i.hargaUmum;
         return `
@@ -345,17 +334,14 @@
     }
 
     function renderKeranjang() {
-      // Refresh harga produk di grid sesuai pilihan harga terbaru
       renderGridProduk(cacheProduk);
-
       var jenisHarga = document.getElementById('pilihJenisHarga').value;
       var total = 0;
       
       var html = keranjangBelanja.map((i, idx) => {
-        // Ambil harga terbaru sesuai jenis harga yang dipilih
         var produkAsli = cacheProduk.find(p => p.id === i.id);
         var hargaTerkini = produkAsli ? produkAsli[jenisHarga] : i.hargaPilihan;
-        i.hargaPilihan = hargaTerkini; // Update harga di keranjang
+        i.hargaPilihan = hargaTerkini;
 
         var sub = i.qty * hargaTerkini;
         total += sub;
@@ -401,7 +387,6 @@
       }
     }
 
-    // --- INVENTORY ---
     async function muatInventory() {
       var gudang = document.getElementById('pilihGudang') ? document.getElementById('pilihGudang').value : "Gudang Utama";
       document.getElementById('statusLoading').style.display = 'block';
@@ -428,7 +413,6 @@
       }
     }
 
-    // --- MASTER PRODUK PRO ---
     async function kirimDataPro() {
       var nama = document.getElementById('nama').value;
       var umum = document.getElementById('hargaUmum').value;
@@ -452,7 +436,6 @@
       } catch(err) { alert(err.message); }
     }
 
-    // --- RIWAYAT ---
     async function muatRiwayat() {
       document.getElementById('loadingRiwayat').style.display = 'block';
       document.getElementById('listRiwayat').innerHTML = '';
@@ -469,7 +452,6 @@
       } catch(err) { document.getElementById('loadingRiwayat').style.display = 'none'; alert(err.message); }
     }
 
-    // --- LAPORAN ---
     async function muatLaporan() {
       document.getElementById('loadingLaporan').style.display = 'block';
       document.getElementById('kontenLaporan').style.display = 'none';
