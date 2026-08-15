@@ -225,7 +225,7 @@
   </div>
 
   <!-- ========================================== -->
-  <!-- JAVASCRIPT UTAMA (Pakai XMLHttpRequest)   -->
+  <!-- JAVASCRIPT UTAMA (Menggunakan GET + URL)  -->
   <!-- ========================================== -->
   <script>
     // ==============================================
@@ -234,42 +234,35 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbyWZvWv1DTxILqNYCVVcyaA-DHSVuIsStpqd20KLly2Tc0ZnSEFie8XlU3lnzvKQicP/exec";
 
     // ==============================================
-    // FUNGSI PANGGIL API (Pakai XMLHttpRequest)
+    // FUNGSI PANGGIL API (Pakai GET, BEBAS CORS!)
     // ==============================================
     function callAPI(action, data = {}, sheetId = null) {
       return new Promise((resolve, reject) => {
         const payload = { action, sheetId, data };
         const jsonPayload = JSON.stringify(payload);
+        const encodedData = encodeURIComponent(jsonPayload);
+        const url = API_URL + "?data=" + encodedData;
         
-        console.log("📤 Mengirim request:", payload);
+        console.log("📤 Mengirim GET request ke:", url);
 
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', API_URL, true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader('Accept', 'application/json');
-        
-        xhr.onload = function() {
-          if (xhr.status === 200) {
-            try {
-              const result = JSON.parse(xhr.responseText);
-              console.log("📥 Response:", result);
-              resolve(result);
-            } catch (e) {
-              console.error("❌ Gagal parse JSON:", xhr.responseText);
-              reject(new Error("Response bukan JSON valid"));
-            }
-          } else {
-            console.error("❌ HTTP Error:", xhr.status, xhr.statusText);
-            reject(new Error("HTTP " + xhr.status + ": " + xhr.statusText));
+        fetch(url, {
+          method: 'GET',
+          mode: 'cors'
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('HTTP ' + response.status);
           }
-        };
-        
-        xhr.onerror = function() {
-          console.error("❌ Network Error");
-          reject(new Error("Gagal terhubung ke server. Periksa URL API."));
-        };
-        
-        xhr.send(jsonPayload);
+          return response.json();
+        })
+        .then(result => {
+          console.log("📥 Response:", result);
+          resolve(result);
+        })
+        .catch(error => {
+          console.error("❌ API Error:", error);
+          reject(new Error("Gagal terhubung ke server. Periksa URL API.\n" + error.message));
+        });
       });
     }
 
