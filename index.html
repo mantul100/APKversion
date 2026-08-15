@@ -225,7 +225,7 @@
   </div>
 
   <!-- ========================================== -->
-  <!-- JAVASCRIPT UTAMA (Menggunakan Fetch API)   -->
+  <!-- JAVASCRIPT UTAMA (Pakai XMLHttpRequest)   -->
   <!-- ========================================== -->
   <script>
     // ==============================================
@@ -234,32 +234,43 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbzwhOTgfe54RtUgcPKakcjRm2uJarYog8fyvQyNRX2vFKQguTDZRCuwQpLeH8SaKcg3/exec";
 
     // ==============================================
-    // FUNGSI PANGGIL API (Pengganti google.script.run)
+    // FUNGSI PANGGIL API (Pakai XMLHttpRequest)
     // ==============================================
-    async function callAPI(action, data = {}, sheetId = null) {
-      try {
+    function callAPI(action, data = {}, sheetId = null) {
+      return new Promise((resolve, reject) => {
         const payload = { action, sheetId, data };
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          mode: 'no-cors', // Hapus mode no-cors untuk testing, tapi biarkan agar aman
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        // Karena mode 'no-cors' tidak bisa baca response, kita handle dengan cara lain.
-        // Sebenarnya kita perlu mode 'cors', tapi Apps Script tidak support CORS header standar.
-        // Solusi: Kita gunakan mode 'cors' dan handle error.
-        // Ubah ke mode 'cors' untuk bisa baca response.
-        // TAPI Apps Script tidak mengembalikan header CORS, jadi kita pakai JSONP? Tidak.
-        // Kita ubah sedikit: fetch tanpa mode, biarkan default (cors).
-        // Jika error CORS, kita gunakan workaround: deploy sebagai "Anyone" dan pakai JSONP?
-        // Sebenarnya untuk production, Apps Script sudah bisa diakses via fetch dengan mode 'cors' jika deploy sebagai "Anyone".
-        // Saya sarankan pakai mode 'cors' dan handle error.
-        const result = await response.json();
-        return result;
-      } catch (error) {
-        console.error("API Error:", error);
-        return { status: "error", pesan: "Gagal terhubung ke server. Periksa URL API." };
-      }
+        const jsonPayload = JSON.stringify(payload);
+        
+        console.log("📤 Mengirim request:", payload);
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', API_URL, true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('Accept', 'application/json');
+        
+        xhr.onload = function() {
+          if (xhr.status === 200) {
+            try {
+              const result = JSON.parse(xhr.responseText);
+              console.log("📥 Response:", result);
+              resolve(result);
+            } catch (e) {
+              console.error("❌ Gagal parse JSON:", xhr.responseText);
+              reject(new Error("Response bukan JSON valid"));
+            }
+          } else {
+            console.error("❌ HTTP Error:", xhr.status, xhr.statusText);
+            reject(new Error("HTTP " + xhr.status + ": " + xhr.statusText));
+          }
+        };
+        
+        xhr.onerror = function() {
+          console.error("❌ Network Error");
+          reject(new Error("Gagal terhubung ke server. Periksa URL API."));
+        };
+        
+        xhr.send(jsonPayload);
+      });
     }
 
     // === VARIABEL GLOBAL ===
@@ -291,10 +302,15 @@
       var btn = document.getElementById('btnRegister');
       btn.innerText = "Membuat..."; btn.disabled = true;
       
-      const res = await callAPI('registerTokoBaru', { namaToko: n, username: u, password: p });
-      alert(res.pesan);
-      btn.innerText = "BUAT AKUN"; btn.disabled = false;
-      if(res.status === "sukses") toggleAuth('login');
+      try {
+        const res = await callAPI('registerTokoBaru', { namaToko: n, username: u, password: p });
+        alert(res.pesan);
+        btn.innerText = "BUAT AKUN"; btn.disabled = false;
+        if(res.status === "sukses") toggleAuth('login');
+      } catch(err) {
+        btn.innerText = "BUAT AKUN"; btn.disabled = false;
+        alert("Error: " + err.message);
+      }
     }
 
     async function prosesLogin() {
@@ -304,14 +320,19 @@
       var btn = document.getElementById('btnLogin');
       btn.innerText = "Memeriksa..."; btn.disabled = true;
       
-      const res = await callAPI('cekLoginSaaS', { username: u, password: p });
-      btn.innerText = "MASUK"; btn.disabled = false;
-      if(res.status === "sukses") {
-        sessionUser = { nama: res.nama, role: res.role, toko: res.toko, sheetId: res.sheetId };
-        localStorage.setItem("mantulOS_User", JSON.stringify(sessionUser));
-        tampilkanMainApp();
-      } else {
-        alert(res.pesan);
+      try {
+        const res = await callAPI('cekLoginSaaS', { username: u, password: p });
+        btn.innerText = "MASUK"; btn.disabled = false;
+        if(res.status === "sukses") {
+          sessionUser = { nama: res.nama, role: res.role, toko: res.toko, sheetId: res.sheetId };
+          localStorage.setItem("mantulOS_User", JSON.stringify(sessionUser));
+          tampilkanMainApp();
+        } else {
+          alert(res.pesan);
+        }
+      } catch(err) {
+        btn.innerText = "MASUK"; btn.disabled = false;
+        alert("Error: " + err.message);
       }
     }
 
@@ -365,38 +386,48 @@
     async function muatProdukKasir() {
       document.getElementById('statusLoadingKasir').style.display = 'block';
       document.getElementById('gridProdukKasir').innerHTML = "";
-      const data = await callAPI('getDataInventory', {}, sessionUser.sheetId);
-      document.getElementById('statusLoadingKasir').style.display = 'none';
-      if(!data || data.length === 0) { 
-        document.getElementById('gridProdukKasir').innerHTML = '<p class="col-span-2 text-center text-xs text-gray-400 py-4">Belum ada produk.</p>'; 
-        return; 
+      try {
+        const data = await callAPI('getDataInventory', {}, sessionUser.sheetId);
+        document.getElementById('statusLoadingKasir').style.display = 'none';
+        if(!data || data.length === 0) { 
+          document.getElementById('gridProdukKasir').innerHTML = '<p class="col-span-2 text-center text-xs text-gray-400 py-4">Belum ada produk.</p>'; 
+          return; 
+        }
+        var html = data.map(i => `
+          <div onclick="tambahKeKeranjang('${i.id}','${i.nama}',${i.harga},${i.stok})" class="border rounded-xl p-3 text-center bg-gray-50 active:bg-orange-50 cursor-pointer shadow-sm hover:shadow transition-all ${i.stok<=0?'opacity-40 pointer-events-none':''}">
+            <div class="text-[10px] text-gray-400 font-semibold">${i.stok} tersisa</div>
+            <div class="font-bold text-gray-800 text-sm truncate">${i.nama}</div>
+            <div class="text-orange-600 font-bold text-xs mt-1">Rp ${i.harga.toLocaleString('id-ID')}</div>
+          </div>`).join('');
+        document.getElementById('gridProdukKasir').innerHTML = html;
+      } catch(err) {
+        document.getElementById('statusLoadingKasir').style.display = 'none';
+        alert("Gagal memuat produk: " + err.message);
       }
-      var html = data.map(i => `
-        <div onclick="tambahKeKeranjang('${i.id}','${i.nama}',${i.harga},${i.stok})" class="border rounded-xl p-3 text-center bg-gray-50 active:bg-orange-50 cursor-pointer shadow-sm hover:shadow transition-all ${i.stok<=0?'opacity-40 pointer-events-none':''}">
-          <div class="text-[10px] text-gray-400 font-semibold">${i.stok} tersisa</div>
-          <div class="font-bold text-gray-800 text-sm truncate">${i.nama}</div>
-          <div class="text-orange-600 font-bold text-xs mt-1">Rp ${i.harga.toLocaleString('id-ID')}</div>
-        </div>`).join('');
-      document.getElementById('gridProdukKasir').innerHTML = html;
     }
 
     async function cariProdukKasir(keyword) {
       if(keyword.length < 1) { muatProdukKasir(); return; }
       document.getElementById('statusLoadingKasir').style.display = 'block';
       document.getElementById('gridProdukKasir').innerHTML = '';
-      const data = await callAPI('cariProduk', { keyword: keyword }, sessionUser.sheetId);
-      document.getElementById('statusLoadingKasir').style.display = 'none';
-      if(!data || data.length === 0) { 
-        document.getElementById('gridProdukKasir').innerHTML = '<p class="col-span-2 text-center text-xs text-gray-400 py-4">Tidak ditemukan.</p>'; 
-        return; 
+      try {
+        const data = await callAPI('cariProduk', { keyword: keyword }, sessionUser.sheetId);
+        document.getElementById('statusLoadingKasir').style.display = 'none';
+        if(!data || data.length === 0) { 
+          document.getElementById('gridProdukKasir').innerHTML = '<p class="col-span-2 text-center text-xs text-gray-400 py-4">Tidak ditemukan.</p>'; 
+          return; 
+        }
+        var html = data.map(i => `
+          <div onclick="tambahKeKeranjang('${i.id}','${i.nama}',${i.harga},${i.stok})" class="border rounded-xl p-3 text-center bg-gray-50 active:bg-orange-50 cursor-pointer ${i.stok<=0?'opacity-40 pointer-events-none':''}">
+            <div class="text-[10px] text-gray-400 font-semibold">${i.stok} tersisa</div>
+            <div class="font-bold text-gray-800 text-sm truncate">${i.nama}</div>
+            <div class="text-orange-600 font-bold text-xs mt-1">Rp ${i.harga.toLocaleString('id-ID')}</div>
+          </div>`).join('');
+        document.getElementById('gridProdukKasir').innerHTML = html;
+      } catch(err) {
+        document.getElementById('statusLoadingKasir').style.display = 'none';
+        alert("Gagal mencari produk: " + err.message);
       }
-      var html = data.map(i => `
-        <div onclick="tambahKeKeranjang('${i.id}','${i.nama}',${i.harga},${i.stok})" class="border rounded-xl p-3 text-center bg-gray-50 active:bg-orange-50 cursor-pointer ${i.stok<=0?'opacity-40 pointer-events-none':''}">
-          <div class="text-[10px] text-gray-400 font-semibold">${i.stok} tersisa</div>
-          <div class="font-bold text-gray-800 text-sm truncate">${i.nama}</div>
-          <div class="text-orange-600 font-bold text-xs mt-1">Rp ${i.harga.toLocaleString('id-ID')}</div>
-        </div>`).join('');
-      document.getElementById('gridProdukKasir').innerHTML = html;
     }
 
     function tambahKeKeranjang(id, nama, harga, max) {
@@ -444,16 +475,21 @@
       btn.innerText = "Memproses..."; btn.disabled = true;
       var diskon = parseInt(document.getElementById('inputDiskon').value) || 0;
       
-      const res = await callAPI('prosesCheckout', {
-        keranjang: keranjangBelanja,
-        metodeBayar: document.getElementById('metodeBayar').value,
-        kasir: sessionUser.nama,
-        diskon: diskon
-      }, sessionUser.sheetId);
+      try {
+        const res = await callAPI('prosesCheckout', {
+          keranjang: keranjangBelanja,
+          metodeBayar: document.getElementById('metodeBayar').value,
+          kasir: sessionUser.nama,
+          diskon: diskon
+        }, sessionUser.sheetId);
 
-      showNotif("Transaksi Berhasil! 🎉 ID: "+res);
-      keranjangBelanja = []; renderKeranjang(); muatProdukKasir();
-      btn.innerText = "BAYAR SEKARANG";
+        showNotif("Transaksi Berhasil! 🎉 ID: "+res);
+        keranjangBelanja = []; renderKeranjang(); muatProdukKasir();
+        btn.innerText = "BAYAR SEKARANG";
+      } catch(err) {
+        alert("Error checkout: " + err.message);
+        btn.innerText = "BAYAR SEKARANG";
+      }
     }
 
     function showNotif(msg) {
@@ -468,39 +504,53 @@
     async function muatInventory() {
       document.getElementById('statusLoading').style.display = 'block';
       document.getElementById('listInventory').innerHTML = '';
-      const data = await callAPI('getDataInventory', {}, sessionUser.sheetId);
-      document.getElementById('statusLoading').style.display = 'none';
-      if(!data || data.length === 0) { document.getElementById('listInventory').innerHTML = '<p class="text-center text-gray-400 py-4">Kosong.</p>'; return; }
-      var html = data.map(i => `
-        <div class="p-3 border rounded-xl flex justify-between items-center bg-white shadow-sm border-l-4 ${i.stok <= i.minStok ? 'border-red-500' : 'border-blue-500'}">
-          <div><div class="font-bold text-sm">${i.nama}</div><div class="text-xs text-gray-400">${i.kategori}</div></div>
-          <div class="text-center px-3 py-1 rounded ${i.stok <= i.minStok ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}">
-            <div class="text-lg font-black">${i.stok}</div>
-          </div>
-        </div>`).join('');
-      document.getElementById('listInventory').innerHTML = html;
+      try {
+        const data = await callAPI('getDataInventory', {}, sessionUser.sheetId);
+        document.getElementById('statusLoading').style.display = 'none';
+        if(!data || data.length === 0) { document.getElementById('listInventory').innerHTML = '<p class="text-center text-gray-400 py-4">Kosong.</p>'; return; }
+        var html = data.map(i => `
+          <div class="p-3 border rounded-xl flex justify-between items-center bg-white shadow-sm border-l-4 ${i.stok <= i.minStok ? 'border-red-500' : 'border-blue-500'}">
+            <div><div class="font-bold text-sm">${i.nama}</div><div class="text-xs text-gray-400">${i.kategori}</div></div>
+            <div class="text-center px-3 py-1 rounded ${i.stok <= i.minStok ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}">
+              <div class="text-lg font-black">${i.stok}</div>
+            </div>
+          </div>`).join('');
+        document.getElementById('listInventory').innerHTML = html;
+      } catch(err) {
+        document.getElementById('statusLoading').style.display = 'none';
+        alert("Gagal memuat stok: " + err.message);
+      }
     }
 
     // --- MUTASI ---
     async function prepareMutasi() {
-      const data = await callAPI('getDataInventory', {}, sessionUser.sheetId);
-      if(data) document.getElementById('mutasiProduk').innerHTML = data.map(i => `<option value="${i.id}">${i.nama} (Stok: ${i.stok})</option>`).join('');
+      try {
+        const data = await callAPI('getDataInventory', {}, sessionUser.sheetId);
+        if(data) document.getElementById('mutasiProduk').innerHTML = data.map(i => `<option value="${i.id}">${i.nama} (Stok: ${i.stok})</option>`).join('');
+      } catch(err) {
+        alert("Gagal memuat produk: " + err.message);
+      }
     }
 
     async function simpanMutasi() {
       var qty = document.getElementById('mutasiQty').value;
       if(!qty || qty <= 0) { alert("Masukkan jumlah valid!"); return; }
       var btn = document.getElementById('btnMutasi'); btn.innerText="Menyimpan..."; btn.disabled=true;
-      const res = await callAPI('simpanMutasi', {
-        idProduk: document.getElementById('mutasiProduk').value,
-        tipe: document.getElementById('mutasiTipe').value,
-        qty: qty,
-        keterangan: document.getElementById('mutasiKet').value || "Manual",
-        user: sessionUser.nama
-      }, sessionUser.sheetId);
-      alert(res);
-      document.getElementById('mutasiQty').value=""; document.getElementById('mutasiKet').value="";
-      btn.innerText="Simpan Mutasi"; btn.disabled=false; prepareMutasi();
+      try {
+        const res = await callAPI('simpanMutasi', {
+          idProduk: document.getElementById('mutasiProduk').value,
+          tipe: document.getElementById('mutasiTipe').value,
+          qty: qty,
+          keterangan: document.getElementById('mutasiKet').value || "Manual",
+          user: sessionUser.nama
+        }, sessionUser.sheetId);
+        alert(res);
+        document.getElementById('mutasiQty').value=""; document.getElementById('mutasiKet').value="";
+        btn.innerText="Simpan Mutasi"; btn.disabled=false; prepareMutasi();
+      } catch(err) {
+        alert("Error: " + err.message);
+        btn.innerText="Simpan Mutasi"; btn.disabled=false;
+      }
     }
 
     // --- MASTER PRODUK ---
@@ -509,74 +559,97 @@
       var jual = document.getElementById('hargaJual').value;
       var stok = document.getElementById('stokAwal').value;
       if(!nama || !jual || !stok) { alert("Nama, Harga Jual, dan Stok wajib diisi!"); return; }
-      const res = await callAPI('simpanProduk', {
-        nama: nama, sku: document.getElementById('sku').value || "-", kategori: "Umum",
-        hargaModal: document.getElementById('hargaModal').value || 0, hargaJual: jual,
-        stokAwal: stok, minStok: document.getElementById('minStok').value || 5
-      }, sessionUser.sheetId);
-      alert(res);
-      document.querySelectorAll('#pageTambah input').forEach(i => i.value = '');
-      muatProdukKasir();
+      try {
+        const res = await callAPI('simpanProduk', {
+          nama: nama, sku: document.getElementById('sku').value || "-", kategori: "Umum",
+          hargaModal: document.getElementById('hargaModal').value || 0, hargaJual: jual,
+          stokAwal: stok, minStok: document.getElementById('minStok').value || 5
+        }, sessionUser.sheetId);
+        alert(res);
+        document.querySelectorAll('#pageTambah input').forEach(i => i.value = '');
+        muatProdukKasir();
+      } catch(err) {
+        alert("Error: " + err.message);
+      }
     }
 
     // --- RIWAYAT & RETUR ---
     async function muatRiwayat() {
       document.getElementById('loadingRiwayat').style.display = 'block';
       document.getElementById('listRiwayat').innerHTML = '';
-      const data = await callAPI('getRiwayatTransaksi', { limit: 50 }, sessionUser.sheetId);
-      document.getElementById('loadingRiwayat').style.display = 'none';
-      if(!data || data.length === 0) { document.getElementById('listRiwayat').innerHTML = '<p class="text-center text-gray-400 py-4">Kosong.</p>'; return; }
-      var html = data.map(t => `
-        <div class="border-l-4 border-blue-400 pl-3 text-xs bg-gray-50 p-3 rounded-xl shadow-sm">
-          <div class="flex justify-between font-bold"><span>${t.idTransaksi}</span><span class="text-orange-600">Rp ${t.subtotal.toLocaleString('id-ID')}</span></div>
-          <div class="text-gray-500">${t.namaProduk} x${t.qty} | ${t.kasir}</div>
-          <div class="text-[10px] text-gray-400">${new Date(t.tanggal).toLocaleString('id-ID')}</div>
-          ${sessionUser.role !== 'Kasir' ? `<button onclick="returProduk('${t.idTransaksi}','${t.idProduk}','${t.namaProduk}',${t.qty})" class="text-red-500 text-xs font-bold mt-1 hover:underline">Retur</button>` : ''}
-        </div>`).join('');
-      document.getElementById('listRiwayat').innerHTML = html;
+      try {
+        const data = await callAPI('getRiwayatTransaksi', { limit: 50 }, sessionUser.sheetId);
+        document.getElementById('loadingRiwayat').style.display = 'none';
+        if(!data || data.length === 0) { document.getElementById('listRiwayat').innerHTML = '<p class="text-center text-gray-400 py-4">Kosong.</p>'; return; }
+        var html = data.map(t => `
+          <div class="border-l-4 border-blue-400 pl-3 text-xs bg-gray-50 p-3 rounded-xl shadow-sm">
+            <div class="flex justify-between font-bold"><span>${t.idTransaksi}</span><span class="text-orange-600">Rp ${t.subtotal.toLocaleString('id-ID')}</span></div>
+            <div class="text-gray-500">${t.namaProduk} x${t.qty} | ${t.kasir}</div>
+            <div class="text-[10px] text-gray-400">${new Date(t.tanggal).toLocaleString('id-ID')}</div>
+            ${sessionUser.role !== 'Kasir' ? `<button onclick="returProduk('${t.idTransaksi}','${t.idProduk}','${t.namaProduk}',${t.qty})" class="text-red-500 text-xs font-bold mt-1 hover:underline">Retur</button>` : ''}
+          </div>`).join('');
+        document.getElementById('listRiwayat').innerHTML = html;
+      } catch(err) {
+        document.getElementById('loadingRiwayat').style.display = 'none';
+        alert("Gagal memuat riwayat: " + err.message);
+      }
     }
 
     async function returProduk(idTransaksi, idProduk, nama, maxQty) {
       var qty = prompt("Masukkan jumlah retur untuk '"+nama+"' (max "+maxQty+"):", "1");
       if(!qty || qty <= 0 || qty > maxQty) return alert("Jumlah tidak valid!");
       if(!confirm("Yakin retur "+qty+" item?")) return;
-      const res = await callAPI('prosesRetur', { idTransaksi, idProduk, qtyRetur: parseInt(qty) }, sessionUser.sheetId);
-      alert(res);
-      muatRiwayat();
+      try {
+        const res = await callAPI('prosesRetur', { idTransaksi, idProduk, qtyRetur: parseInt(qty) }, sessionUser.sheetId);
+        alert(res);
+        muatRiwayat();
+      } catch(err) {
+        alert("Error retur: " + err.message);
+      }
     }
 
     // --- HISTORY MUTASI ---
     async function muatHistoryMutasi() {
       document.getElementById('loadingHistoryMutasi').style.display = 'block';
       document.getElementById('listHistoryMutasi').innerHTML = '';
-      const data = await callAPI('getHistoryMutasi', {}, sessionUser.sheetId);
-      document.getElementById('loadingHistoryMutasi').style.display = 'none';
-      if(!data || data.length === 0) { document.getElementById('listHistoryMutasi').innerHTML = '<p class="text-center text-gray-400 py-4">Kosong.</p>'; return; }
-      var html = data.map(m => `
-        <div class="flex justify-between items-center border-b py-1 text-xs">
-          <div><span class="font-bold ${m.tipe==='MASUK'?'text-green-600':'text-red-600'}">${m.tipe}</span> ${m.idProduk}</div>
-          <div>${m.qty}</div><div class="text-gray-500">${m.user}</div>
-          <div class="text-[10px] text-gray-400">${new Date(m.tanggal).toLocaleDateString()}</div>
-        </div>`).join('');
-      document.getElementById('listHistoryMutasi').innerHTML = html;
+      try {
+        const data = await callAPI('getHistoryMutasi', {}, sessionUser.sheetId);
+        document.getElementById('loadingHistoryMutasi').style.display = 'none';
+        if(!data || data.length === 0) { document.getElementById('listHistoryMutasi').innerHTML = '<p class="text-center text-gray-400 py-4">Kosong.</p>'; return; }
+        var html = data.map(m => `
+          <div class="flex justify-between items-center border-b py-1 text-xs">
+            <div><span class="font-bold ${m.tipe==='MASUK'?'text-green-600':'text-red-600'}">${m.tipe}</span> ${m.idProduk}</div>
+            <div>${m.qty}</div><div class="text-gray-500">${m.user}</div>
+            <div class="text-[10px] text-gray-400">${new Date(m.tanggal).toLocaleDateString()}</div>
+          </div>`).join('');
+        document.getElementById('listHistoryMutasi').innerHTML = html;
+      } catch(err) {
+        document.getElementById('loadingHistoryMutasi').style.display = 'none';
+        alert("Gagal memuat history mutasi: " + err.message);
+      }
     }
 
     // --- MANAJEMEN PENGGUNA ---
     async function muatPengguna() {
       document.getElementById('loadingPengguna').style.display = 'block';
       document.getElementById('listPengguna').innerHTML = '';
-      const data = await callAPI('getDataPengguna', {}, sessionUser.sheetId);
-      document.getElementById('loadingPengguna').style.display = 'none';
-      if(!data || data.length === 0) { document.getElementById('listPengguna').innerHTML = '<p class="text-center text-gray-400 py-4">Tidak ada user.</p>'; return; }
-      var html = data.map(u => `
-        <div class="flex justify-between items-center border-b py-1 text-sm">
-          <div><span class="font-bold">${u.username}</span> (${u.role}) - ${u.status}</div>
-          <div>
-            <button onclick="ubahStatusUser('${u.id}','${u.status==='Aktif'?'Nonaktif':'Aktif'}')" class="text-xs bg-gray-200 px-2 py-0.5 rounded">${u.status==='Aktif'?'Nonaktif':'Aktif'}</button>
-            <button onclick="hapusUser('${u.id}')" class="text-xs bg-red-500 text-white px-2 py-0.5 rounded ml-1">Hapus</button>
-          </div>
-        </div>`).join('');
-      document.getElementById('listPengguna').innerHTML = html;
+      try {
+        const data = await callAPI('getDataPengguna', {}, sessionUser.sheetId);
+        document.getElementById('loadingPengguna').style.display = 'none';
+        if(!data || data.length === 0) { document.getElementById('listPengguna').innerHTML = '<p class="text-center text-gray-400 py-4">Tidak ada user.</p>'; return; }
+        var html = data.map(u => `
+          <div class="flex justify-between items-center border-b py-1 text-sm">
+            <div><span class="font-bold">${u.username}</span> (${u.role}) - ${u.status}</div>
+            <div>
+              <button onclick="ubahStatusUser('${u.id}','${u.status==='Aktif'?'Nonaktif':'Aktif'}')" class="text-xs bg-gray-200 px-2 py-0.5 rounded">${u.status==='Aktif'?'Nonaktif':'Aktif'}</button>
+              <button onclick="hapusUser('${u.id}')" class="text-xs bg-red-500 text-white px-2 py-0.5 rounded ml-1">Hapus</button>
+            </div>
+          </div>`).join('');
+        document.getElementById('listPengguna').innerHTML = html;
+      } catch(err) {
+        document.getElementById('loadingPengguna').style.display = 'none';
+        alert("Gagal memuat pengguna: " + err.message);
+      }
     }
 
     async function tambahUser() {
@@ -584,41 +657,58 @@
       var password = document.getElementById('newUserPassword').value;
       var role = document.getElementById('newUserRole').value;
       if(!username || !password) { alert("Isi username dan password!"); return; }
-      const res = await callAPI('tambahPengguna', { username, password, role }, sessionUser.sheetId);
-      alert(res);
-      muatPengguna();
+      try {
+        const res = await callAPI('tambahPengguna', { username, password, role }, sessionUser.sheetId);
+        alert(res);
+        muatPengguna();
+      } catch(err) {
+        alert("Error: " + err.message);
+      }
     }
 
     async function ubahStatusUser(id, status) {
       if(!confirm("Ubah status user ini?")) return;
-      const res = await callAPI('updateStatusPengguna', { id, status }, sessionUser.sheetId);
-      alert(res);
-      muatPengguna();
+      try {
+        const res = await callAPI('updateStatusPengguna', { id, status }, sessionUser.sheetId);
+        alert(res);
+        muatPengguna();
+      } catch(err) {
+        alert("Error: " + err.message);
+      }
     }
 
     async function hapusUser(id) {
       if(!confirm("Yakin hapus user ini?")) return;
-      const res = await callAPI('hapusPengguna', { id }, sessionUser.sheetId);
-      alert(res);
-      muatPengguna();
+      try {
+        const res = await callAPI('hapusPengguna', { id }, sessionUser.sheetId);
+        alert(res);
+        muatPengguna();
+      } catch(err) {
+        alert("Error: " + err.message);
+      }
     }
 
     // --- LAPORAN ---
     async function muatLaporan() {
       document.getElementById('loadingLaporan').style.display = 'block';
       document.getElementById('kontenLaporan').style.display = 'none';
-      const data = await callAPI('getLaporanHariIni', {}, sessionUser.sheetId);
-      document.getElementById('loadingLaporan').style.display = 'none';
-      if(!data) return;
-      document.getElementById('kontenLaporan').style.display = 'block';
-      document.getElementById('lapPendapatan').innerText = "Rp " + (data.pendapatan || 0).toLocaleString('id-ID');
-      document.getElementById('lapTrx').innerText = data.jumlahTrx || 0;
-      var html = (data.terjualTerakhir || []).map(i => `
-        <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl border">
-          <div><span class="font-bold">${i.nama}</span> <span class="text-xs text-gray-400">(${i.qty}x)</span></div>
-          <div class="text-teal-600 font-bold text-xs">Rp ${i.total.toLocaleString('id-ID')}</div>
-        </div>`).join('') || '<p class="text-center text-gray-400 py-4 italic">Belum ada transaksi hari ini.</p>';
-      document.getElementById('listTerjual').innerHTML = html;
+      try {
+        const data = await callAPI('getLaporanHariIni', {}, sessionUser.sheetId);
+        document.getElementById('loadingLaporan').style.display = 'none';
+        if(!data) return;
+        document.getElementById('kontenLaporan').style.display = 'block';
+        document.getElementById('lapPendapatan').innerText = "Rp " + (data.pendapatan || 0).toLocaleString('id-ID');
+        document.getElementById('lapTrx').innerText = data.jumlahTrx || 0;
+        var html = (data.terjualTerakhir || []).map(i => `
+          <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl border">
+            <div><span class="font-bold">${i.nama}</span> <span class="text-xs text-gray-400">(${i.qty}x)</span></div>
+            <div class="text-teal-600 font-bold text-xs">Rp ${i.total.toLocaleString('id-ID')}</div>
+          </div>`).join('') || '<p class="text-center text-gray-400 py-4 italic">Belum ada transaksi hari ini.</p>';
+        document.getElementById('listTerjual').innerHTML = html;
+      } catch(err) {
+        document.getElementById('loadingLaporan').style.display = 'none';
+        alert("Gagal memuat laporan: " + err.message);
+      }
     }
   </script>
 </body>
