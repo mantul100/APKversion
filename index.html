@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JagoPOS • Sistem Kasir Cerdas</title>
+  <link rel="icon" type="image/png" href="assets/favicon-jagopos.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -69,7 +70,7 @@
 <div id="authContainer" class="fixed inset-0 z-[9000] flex items-center justify-center bg-slate-100">
   <div id="boxLogin" class="bg-white p-8 rounded-3xl shadow-xl max-w-sm w-full border-t-4 border-blue-600">
     <div class="text-center mb-8">
-      <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-3xl mx-auto shadow-lg shadow-blue-500/30 mb-4">J</div>
+      <img src="assets/logo-jagopos.png" alt="JagoPOS" class="w-16 h-16 mx-auto mb-4">
       <h1 class="text-2xl font-black text-slate-800">JagoPOS</h1>
       <p class="text-xs text-slate-500 mt-1">Sistem Kasir Cerdas</p>
     </div>
@@ -95,6 +96,7 @@
 
   <div id="boxRegister" class="bg-white p-8 rounded-3xl shadow-xl max-w-sm w-full border-t-4 border-emerald-500 hidden">
     <div class="text-center mb-6">
+      <img src="assets/logo-jagopos.png" alt="JagoPOS" class="w-12 h-12 mx-auto mb-2">
       <h1 class="text-xl font-black text-slate-800">Daftar Toko</h1>
       <p class="text-xs text-slate-400">Cloud database otomatis</p>
     </div>
@@ -144,7 +146,7 @@
 <!-- ============================================================= -->
 <div id="sidebarUI" class="fixed left-0 top-0 h-full w-20 bg-slate-900 flex flex-col items-center py-6 justify-between border-r border-slate-800 z-50 hidden">
   <div class="flex flex-col items-center space-y-6 w-full">
-    <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/30">J</div>
+    <img src="assets/logo-jagopos.png" alt="JagoPOS" class="w-12 h-12 rounded-xl shadow-lg shadow-blue-500/30">
     <nav class="flex flex-col space-y-2 w-full px-2">
       <button onclick="bukaHalaman('pageKasir')" id="nav-pageKasir" class="sidebar-btn active w-full p-3.5 rounded-xl flex flex-col items-center justify-center gap-1 text-white bg-blue-600"><i class="fa-solid fa-cash-register text-lg"></i><span class="text-[9px] font-medium">Kasir</span></button>
       <button onclick="bukaHalaman('pageDashboard'); muatDashboard();" id="nav-pageDashboard" class="sidebar-btn admin-only w-full p-3.5 rounded-xl flex flex-col items-center justify-center gap-1 text-slate-400 hover:bg-slate-800 hover:text-white"><i class="fa-solid fa-chart-pie text-lg"></i><span class="text-[9px] font-medium">Analitik</span></button>
@@ -441,7 +443,6 @@
     if (saved) { try { sessionUser = JSON.parse(saved); tampilkanMainApp(); } catch(e) { toggleAuth('login'); } }
     else toggleAuth('login');
 
-    // Event listener konfirmasi password
     document.getElementById('regConfirmPassword')?.addEventListener('input', function() {
       var pwd = document.getElementById('regPassword').value;
       var confirm = this.value;
