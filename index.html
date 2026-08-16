@@ -11,27 +11,22 @@
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 
   <style>
-    /* ===== RESET & FONT ===== */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #f1f5f9; }
     ::-webkit-scrollbar { width: 4px; height: 4px; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 20px; }
 
-    /* ===== TOAST ===== */
     .toast-anim { animation: slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
     @keyframes slideDown { from { transform: translate(-50%, -100%); opacity: 0; } to { transform: translate(-50%, 20px); opacity: 1; } }
 
-    /* ===== SIDEBAR ===== */
     .sidebar-btn { transition: all 0.15s ease; cursor: pointer; }
     .sidebar-btn:hover { background: #1e293b; color: white; }
     .sidebar-btn.active { background: #2563eb; color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
 
-    /* ===== PRODUCT CARD ===== */
     .product-card { transition: all 0.15s ease; cursor: pointer; }
     .product-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); border-color: #2563eb; }
     .product-card:active { transform: scale(0.97); }
 
-    /* ===== PRINT STRUK THERMAL 58mm ===== */
     @media print {
       body * { visibility: hidden !important; }
       #areaStrukThermal, #areaStrukThermal * { visibility: visible !important; }
@@ -43,7 +38,6 @@
       .no-print { display: none !important; }
     }
 
-    /* ===== RESPONSIF ===== */
     @media (max-width: 768px) {
       .pos-layout { flex-direction: column; }
       .pos-katalog { width: 100% !important; height: 55vh !important; }
@@ -53,7 +47,7 @@
 </head>
 <body>
 
-<!-- ===== GLOBAL LOADER ===== -->
+<!-- GLOBAL LOADER -->
 <div id="globalLoader" class="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-[9999] hidden items-center justify-center">
   <div class="bg-white p-6 rounded-2xl shadow-2xl flex flex-col items-center">
     <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-600 mb-4"></i>
@@ -61,12 +55,12 @@
   </div>
 </div>
 
-<!-- ===== TOAST ===== -->
+<!-- TOAST -->
 <div id="customToast" class="fixed top-0 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full shadow-lg text-sm font-bold text-white z-[10000] hidden transition-all flex items-center gap-2 toast-anim">
   <i id="toastIcon" class="fa-solid fa-info-circle"></i> <span id="toastPesan">Notifikasi</span>
 </div>
 
-<!-- ===== AREA STRUK THERMAL ===== -->
+<!-- AREA STRUK THERMAL -->
 <div id="areaStrukThermal" class="hidden print:block p-2"></div>
 
 <!-- ============================================================= -->
@@ -80,11 +74,23 @@
       <p class="text-xs text-slate-500 mt-1">Modern Point of Sale</p>
     </div>
     <div class="space-y-4">
-      <input id="loginEmail" type="email" placeholder="Email" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-600 outline-none text-sm">
-      <input id="loginPassword" type="password" placeholder="Password" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-600 outline-none text-sm" onkeypress="if(event.key==='Enter') prosesLogin()">
+      <!-- Input Username/Email dengan icon -->
+      <div class="relative">
+        <i class="fa-solid fa-envelope absolute left-4 top-3.5 text-slate-400"></i>
+        <input id="loginEmail" type="text" placeholder="Username atau Email" class="w-full pl-11 pr-4 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-600 outline-none text-sm">
+      </div>
+      <!-- Input Password dengan tombol mata -->
+      <div class="relative">
+        <i class="fa-solid fa-lock absolute left-4 top-3.5 text-slate-400"></i>
+        <input id="loginPassword" type="password" placeholder="Password" class="w-full pl-11 pr-12 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-600 outline-none text-sm" onkeypress="if(event.key==='Enter') prosesLogin()">
+        <button onclick="togglePasswordVisibility('loginPassword', this)" type="button" class="absolute right-3 top-3 text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-eye"></i>
+        </button>
+      </div>
       <button onclick="prosesLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-600/20 transition-all active:scale-95">MASUK</button>
     </div>
-    <div class="text-center mt-6">
+    <div class="text-center mt-4 flex flex-col gap-2">
+      <button onclick="bukaModalLupaPassword()" class="text-xs text-blue-600 hover:underline font-medium">Lupa Password?</button>
       <button onclick="toggleAuth('register')" class="text-xs text-slate-500 hover:text-blue-600 font-bold">Belum punya akun? Daftar Toko</button>
     </div>
   </div>
@@ -96,13 +102,27 @@
     </div>
     <div class="space-y-3">
       <input id="regNamaToko" type="text" placeholder="Nama Toko" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-none text-sm">
-      <input id="regEmail" type="email" placeholder="Email Admin" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-none text-sm">
+      <input id="regEmail" type="email" placeholder="Email Admin (untuk login)" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-none text-sm">
+      <input id="regUsername" type="text" placeholder="Username Admin" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-none text-sm">
       <input id="regPassword" type="password" placeholder="Password" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-none text-sm">
       <button onclick="prosesDaftar()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95">BUAT AKUN</button>
     </div>
     <div class="text-center mt-6">
       <button onclick="toggleAuth('login')" class="text-xs text-slate-500 hover:text-emerald-600 font-bold">Sudah punya akun? Login</button>
     </div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- MODAL LUPA PASSWORD                                           -->
+<!-- ============================================================= -->
+<div id="modalLupaPassword" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[9999] hidden items-center justify-center">
+  <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full">
+    <h2 class="text-xl font-black text-slate-800 text-center mb-4">🔐 Lupa Password</h2>
+    <p class="text-xs text-slate-500 text-center mb-4">Masukkan email yang terdaftar, kami akan kirim password Anda.</p>
+    <input id="inputLupaEmail" type="email" placeholder="Email Terdaftar" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-600 outline-none text-sm mb-4">
+    <button onclick="prosesLupaPassword()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-600/20 transition-all">Kirim Password</button>
+    <button onclick="tutupModalLupaPassword()" class="w-full mt-3 text-xs text-slate-500 hover:text-slate-700 font-medium">Batal</button>
   </div>
 </div>
 
@@ -148,19 +168,17 @@
   <!-- WRAPPER HALAMAN -->
   <div class="flex-1 overflow-hidden relative">
 
-    <!-- ====== PAGE 1: KASIR ====== -->
+    <!-- ===== PAGE 1: KASIR ===== -->
     <div id="pageKasir" class="absolute inset-0 flex pos-layout bg-slate-100 page-section">
 
       <!-- KIRI: KATALOG PRODUK -->
       <div class="pos-katalog w-2/3 flex flex-col h-full p-6">
-        <!-- Pencarian -->
         <div class="relative mb-5 shadow-sm">
           <i class="fa-solid fa-barcode absolute left-4 top-3.5 text-slate-400 text-lg"></i>
           <input id="inputCariProduk" type="text" placeholder="Scan barcode atau cari nama produk..." class="w-full pl-12 pr-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-sm font-medium outline-none transition-all" onkeypress="handleScanner(event, this.value)">
           <button onclick="cariProdukKasir(document.getElementById('inputCariProduk').value)" class="absolute right-2 top-2 bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">Cari</button>
         </div>
 
-        <!-- Filter Kategori & Gudang -->
         <div class="flex justify-between items-end mb-4">
           <div id="kategoriContainer" class="flex space-x-2 overflow-x-auto pb-1">
             <button onclick="filterKategori('Semua', event)" class="cat-btn bg-blue-600 text-white shadow-md shadow-blue-600/20 px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border border-blue-600">Semua</button>
@@ -174,7 +192,6 @@
           </select>
         </div>
 
-        <!-- Grid Produk -->
         <div class="flex-1 overflow-y-auto pr-2 pb-10">
           <div id="gridProdukKasir" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4"></div>
           <div id="loadingKatalog" class="text-center py-20 text-slate-400 hidden"><i class="fa-solid fa-spinner fa-spin text-3xl mb-3 text-blue-300 block"></i> Memuat menu...</div>
@@ -203,7 +220,9 @@
             <div class="flex justify-between items-center">
               <span>Harga</span>
               <select id="pilihJenisHarga" class="border rounded px-2 py-0.5 text-[10px] font-bold bg-slate-50 outline-none focus:border-blue-500" onchange="renderKeranjang()">
-                <option value="hargaUmum">Retail</option><option value="hargaGrosir">Grosir</option><option value="hargaMember">Member</option>
+                <option value="hargaUmum">Retail</option>
+                <option value="hargaGrosir">Grosir</option>
+                <option value="hargaMember">Member</option>
               </select>
             </div>
             <div class="flex justify-between pt-3 border-t border-dashed border-slate-200 text-sm font-black text-slate-800">
@@ -217,7 +236,7 @@
       </div>
     </div>
 
-    <!-- ====== PAGE 2: DASHBOARD ====== -->
+    <!-- ===== PAGE 2: DASHBOARD ===== -->
     <div id="pageDashboard" class="absolute inset-0 p-6 overflow-y-auto page-section hidden">
       <h2 class="text-xl font-black text-slate-800 mb-6"><i class="fa-solid fa-chart-line text-blue-600 mr-2"></i> Dashboard</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -240,7 +259,7 @@
       </div>
     </div>
 
-    <!-- ====== PAGE 3: INVENTORY ====== -->
+    <!-- ===== PAGE 3: INVENTORY ===== -->
     <div id="pageInventory" class="absolute inset-0 p-6 overflow-y-auto page-section hidden">
       <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
         <h2 class="text-lg font-black text-slate-800 mb-6"><i class="fa-solid fa-box text-blue-600 mr-2"></i> Stok Barang</h2>
@@ -249,7 +268,7 @@
       </div>
     </div>
 
-    <!-- ====== PAGE 4: LAPORAN ====== -->
+    <!-- ===== PAGE 4: LAPORAN ===== -->
     <div id="pageLaporan" class="absolute inset-0 p-6 overflow-y-auto page-section hidden">
       <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
         <div class="flex justify-between items-center mb-6">
@@ -266,7 +285,7 @@
       </div>
     </div>
 
-    <!-- ====== PAGE 5: SETTING ====== -->
+    <!-- ===== PAGE 5: SETTING ===== -->
     <div id="pageSetting" class="absolute inset-0 p-6 overflow-y-auto page-section hidden">
       <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 max-w-lg">
         <h2 class="text-lg font-black text-slate-800 mb-6"><i class="fa-solid fa-gear text-slate-600 mr-2"></i> Pengaturan Struk</h2>
@@ -366,12 +385,42 @@
     });
   }
 
-  // ===== STATE =====
-  let sessionUser = { nama: "", role: "", toko: "", email: "", sheetId: "" };
-  let keranjang = [];
-  let cacheProduk = [];
-  let totalTagihanGlobal = 0;
-  let chartInstance = null;
+  // ===== TOGGLE PASSWORD VISIBILITY =====
+  function togglePasswordVisibility(inputId, btn) {
+    var input = document.getElementById(inputId);
+    var icon = btn.querySelector('i');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.className = 'fa-solid fa-eye-slash';
+    } else {
+      input.type = 'password';
+      icon.className = 'fa-solid fa-eye';
+    }
+  }
+
+  // ===== MODAL LUPA PASSWORD =====
+  function bukaModalLupaPassword() {
+    document.getElementById('modalLupaPassword').classList.remove('hidden');
+    document.getElementById('modalLupaPassword').classList.add('flex');
+  }
+
+  function tutupModalLupaPassword() {
+    document.getElementById('modalLupaPassword').classList.add('hidden');
+    document.getElementById('modalLupaPassword').classList.remove('flex');
+    document.getElementById('inputLupaEmail').value = '';
+  }
+
+  async function prosesLupaPassword() {
+    var email = document.getElementById('inputLupaEmail').value;
+    if (!email || !email.includes('@')) { showToast("Masukkan email valid!", "error"); return; }
+    showLoading(true, "Mengirim password...");
+    try {
+      var res = await callAPI('lupaPassword', { email: email });
+      showLoading(false);
+      showToast(res.pesan, res.status === "sukses" ? "success" : "error");
+      if (res.status === "sukses") tutupModalLupaPassword();
+    } catch(e) { showLoading(false); showToast(e.message, "error"); }
+  }
 
   // ===== AUTH =====
   window.onload = function() {
@@ -379,6 +428,8 @@
     if (saved) { try { sessionUser = JSON.parse(saved); tampilkanMainApp(); } catch(e) { toggleAuth('login'); } }
     else toggleAuth('login');
   };
+
+  let sessionUser = { nama: "", role: "", toko: "", email: "", sheetId: "" };
 
   function toggleAuth(type) {
     document.getElementById('authContainer').classList.remove('hidden');
@@ -391,11 +442,13 @@
   async function prosesDaftar() {
     const n = document.getElementById('regNamaToko').value;
     const e = document.getElementById('regEmail').value;
+    const u = document.getElementById('regUsername').value;
     const p = document.getElementById('regPassword').value;
-    if (!n || !e || !p) return showToast("Lengkapi form!", "error");
+    if (!n || !e || !u || !p) return showToast("Lengkapi semua form!", "error");
+    if (!e.includes('@')) return showToast("Email tidak valid!", "error");
     showLoading(true, "Membuat database...");
     try {
-      const res = await callAPI('registerTokoBaru', { namaToko: n, email: e, password: p });
+      const res = await callAPI('registerTokoBaru', { namaToko: n, email: e, username: u, password: p });
       showLoading(false);
       showToast(res.pesan, res.status === "sukses" ? "success" : "error");
       if (res.status === "sukses") toggleAuth('login');
@@ -405,7 +458,7 @@
   async function prosesLogin() {
     const e = document.getElementById('loginEmail').value;
     const p = document.getElementById('loginPassword').value;
-    if (!e || !p) return showToast("Isi email & password!", "error");
+    if (!e || !p) return showToast("Isi username/email & password!", "error");
     showLoading(true, "Otentikasi...");
     try {
       const res = await callAPI('cekLoginSaaS', { username: e, password: p });
@@ -445,12 +498,17 @@
   }
 
   // ===== KASIR =====
+  let keranjang = [];
+  let cacheProduk = [];
+  let totalTagihanGlobal = 0;
+  let chartInstance = null;
+
   async function muatProdukKasir() {
     const gudang = document.getElementById('pilihGudang').value;
     document.getElementById('loadingKatalog').classList.remove('hidden');
     safeSetHTML('gridProdukKasir', '');
     try {
-      const data = await callAPI('getDataInventory', { gudang }, sessionUser.sheetId);
+      const data = await callAPI('getDataInventory', { gudang: gudang }, sessionUser.sheetId);
       document.getElementById('loadingKatalog').classList.add('hidden');
       cacheProduk = data || [];
       renderGridProduk(cacheProduk);
@@ -487,8 +545,8 @@
   function cariProdukKasir(keyword) {
     const kata = keyword.toLowerCase().trim();
     if (!kata) { filterKategori('Semua', null); return; }
-    const hasil = cacheProduk.filter(p => p.nama.toLowerCase().includes(kata) || (p.sku && p.sku.toLowerCase() === kata));
-    if (hasil.length === 1 && hasil[0].sku && hasil[0].sku.toLowerCase() === kata) {
+    const hasil = cacheProduk.filter(p => p.nama.toLowerCase().includes(kata) || (p.barcode && p.barcode === kata));
+    if (hasil.length === 1 && hasil[0].barcode === kata) {
       const p = hasil[0];
       const tipe = document.getElementById('pilihJenisHarga').value;
       tambahKeKeranjang(p.id, p.nama, p[tipe] || p.hargaUmum, p.stok);
@@ -605,12 +663,12 @@
         customer: "Umum"
       }, sessionUser.sheetId);
       showLoading(false);
-      if (res.status === 'sukses' || res.toString().includes('TRX')) {
+      if (res.status === 'sukses' || res.idTransaksi) {
         showToast("Transaksi berhasil!", "success");
-        cetakStrukThermal(res.idTransaksi || res, metode, bayar, bayar - totalTagihanGlobal);
+        cetakStrukThermal(res.idTransaksi || 'TRX-' + Date.now(), metode, bayar, bayar - totalTagihanGlobal);
         kosongkanKeranjang();
         muatProdukKasir();
-      } else showToast("Gagal checkout", "error");
+      } else showToast(res.pesan || "Gagal checkout", "error");
     } catch(e) { showLoading(false); showToast("Koneksi gagal", "error"); }
   }
 
@@ -659,7 +717,7 @@
   async function muatInventory() {
     document.getElementById('statusLoadingStok').classList.remove('hidden');
     try {
-      const data = await callAPI('getDataInventory', {}, sessionUser.sheetId);
+      const data = await callAPI('getDataInventory', { gudang: "Gudang Utama" }, sessionUser.sheetId);
       document.getElementById('statusLoadingStok').classList.add('hidden');
       if (!data || !data.length) return safeSetHTML('listInventory', '<p class="text-slate-400">Tidak ada produk</p>');
       safeSetHTML('listInventory', data.map(i => `
@@ -680,7 +738,7 @@
     try {
       const res = await callAPI('getLaporanFilter', { startDate: start, endDate: end }, sessionUser.sheetId);
       document.getElementById('loadingLaporan').classList.add('hidden');
-      if (!res.items || !res.items.length) return safeSetHTML('kontenLaporan', '<p class="text-slate-400">Tidak ada transaksi</p>');
+      if (res.status !== 'sukses' || !res.items || !res.items.length) return safeSetHTML('kontenLaporan', '<p class="text-slate-400">Tidak ada transaksi</p>');
       safeSetHTML('kontenLaporan', res.items.map(i => `<div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border"><div><span class="font-bold">${i.nama}</span> <span class="text-xs text-slate-400">(${i.qty}x)</span></div><div class="font-bold text-emerald-600">Rp ${i.total.toLocaleString()}</div></div>`).join(''));
     } catch(e) { showToast("Gagal muat laporan", "error"); document.getElementById('loadingLaporan').classList.add('hidden'); }
   }
@@ -690,7 +748,7 @@
     const end = document.getElementById('endDate').value || new Date().toISOString().split('T')[0];
     try {
       const res = await callAPI('getLaporanFilter', { startDate: start, endDate: end }, sessionUser.sheetId);
-      if (!res.items || !res.items.length) return showToast("Tidak ada data", "warning");
+      if (res.status !== 'sukses' || !res.items || !res.items.length) return showToast("Tidak ada data", "warning");
       const wb = XLSX.utils.book_new();
       const data = [['Tanggal','Nama','Qty','Total']];
       res.items.forEach(i => data.push([i.tgl || '', i.nama, i.qty, i.total]));
