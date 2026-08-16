@@ -70,7 +70,8 @@
 <div id="authContainer" class="fixed inset-0 z-[9000] flex items-center justify-center bg-slate-100">
   <div id="boxLogin" class="bg-white p-8 rounded-3xl shadow-xl max-w-sm w-full border-t-4 border-blue-600">
     <div class="text-center mb-8">
-      <img src="assets/logo-jagopos.png" alt="JagoPOS" class="w-16 h-16 mx-auto mb-4">
+      <!-- LOGO UTAMA -->
+      <img src="assets/logo-jagopos.png" alt="JagoPOS" class="w-20 h-20 mx-auto mb-4">
       <h1 class="text-2xl font-black text-slate-800">JagoPOS</h1>
       <p class="text-xs text-slate-500 mt-1">Sistem Kasir Cerdas</p>
     </div>
@@ -96,7 +97,7 @@
 
   <div id="boxRegister" class="bg-white p-8 rounded-3xl shadow-xl max-w-sm w-full border-t-4 border-emerald-500 hidden">
     <div class="text-center mb-6">
-      <img src="assets/logo-jagopos.png" alt="JagoPOS" class="w-12 h-12 mx-auto mb-2">
+      <img src="assets/logo-jagopos.png" alt="JagoPOS" class="w-16 h-16 mx-auto mb-3">
       <h1 class="text-xl font-black text-slate-800">Daftar Toko</h1>
       <p class="text-xs text-slate-400">Cloud database otomatis</p>
     </div>
@@ -133,6 +134,9 @@
 <!-- MODAL LUPA PASSWORD -->
 <div id="modalLupaPassword" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[9999] hidden items-center justify-center">
   <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full">
+    <div class="flex justify-center mb-4">
+      <img src="assets/favicon-jagopos.png" alt="JagoPOS" class="w-12 h-12">
+    </div>
     <h2 class="text-xl font-black text-slate-800 text-center mb-4">🔐 Lupa Password</h2>
     <p class="text-xs text-slate-500 text-center mb-4">Masukkan email terdaftar, kami kirimkan password Anda.</p>
     <input id="inputLupaEmail" type="email" placeholder="Email Terdaftar" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-600 outline-none text-sm mb-4">
@@ -146,6 +150,7 @@
 <!-- ============================================================= -->
 <div id="sidebarUI" class="fixed left-0 top-0 h-full w-20 bg-slate-900 flex flex-col items-center py-6 justify-between border-r border-slate-800 z-50 hidden">
   <div class="flex flex-col items-center space-y-6 w-full">
+    <!-- LOGO SIDEBAR -->
     <img src="assets/logo-jagopos.png" alt="JagoPOS" class="w-12 h-12 rounded-xl shadow-lg shadow-blue-500/30">
     <nav class="flex flex-col space-y-2 w-full px-2">
       <button onclick="bukaHalaman('pageKasir')" id="nav-pageKasir" class="sidebar-btn active w-full p-3.5 rounded-xl flex flex-col items-center justify-center gap-1 text-white bg-blue-600"><i class="fa-solid fa-cash-register text-lg"></i><span class="text-[9px] font-medium">Kasir</span></button>
@@ -167,8 +172,9 @@
 
   <!-- HEADER -->
   <div class="bg-white h-14 border-b border-slate-200 flex justify-between items-center px-6 shadow-sm shrink-0">
-    <div class="text-sm font-bold text-slate-800 flex items-center gap-2">
-      <span id="labelTokoHeader">Toko Anda</span>
+    <div class="flex items-center gap-3">
+      <img src="assets/favicon-jagopos.png" alt="JagoPOS" class="w-8 h-8">
+      <span class="text-sm font-bold text-slate-800" id="labelTokoHeader">Toko Anda</span>
       <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-black"><i class="fa-solid fa-cloud-arrow-up mr-1"></i> SYNC</span>
     </div>
     <div class="flex items-center gap-3">
