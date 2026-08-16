@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JagoPOS • Sistem Kasir Cerdas</title>
-  <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon-jagopos.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -17,29 +16,20 @@
     body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #f1f5f9; }
     ::-webkit-scrollbar { width: 4px; height: 4px; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 20px; }
-
     .toast-anim { animation: slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
     @keyframes slideDown { from { transform: translate(-50%, -100%); opacity: 0; } to { transform: translate(-50%, 20px); opacity: 1; } }
-
     .sidebar-btn { transition: all 0.15s ease; cursor: pointer; }
     .sidebar-btn:hover { background: #1e293b; color: white; }
     .sidebar-btn.active { background: #2563eb; color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
-
     .product-card { transition: all 0.15s ease; cursor: pointer; }
     .product-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); border-color: #2563eb; }
     .product-card:active { transform: scale(0.97); }
-
     @media print {
       body * { visibility: hidden !important; }
       #areaStrukThermal, #areaStrukThermal * { visibility: visible !important; }
-      #areaStrukThermal {
-        position: absolute; left: 0; top: 0; width: 58mm; margin: 0; padding: 4mm;
-        font-family: 'Courier New', monospace; font-size: 10px; color: #000;
-        background: white;
-      }
+      #areaStrukThermal { position: absolute; left: 0; top: 0; width: 58mm; margin: 0; padding: 4mm; font-family: 'Courier New', monospace; font-size: 10px; color: #000; background: white; }
       .no-print { display: none !important; }
     }
-
     @media (max-width: 768px) {
       .pos-layout { flex-direction: column; }
       .pos-katalog { width: 100% !important; height: 55vh !important; }
@@ -71,8 +61,8 @@
 <div id="authContainer" class="fixed inset-0 z-[9000] flex items-center justify-center bg-slate-100">
   <div id="boxLogin" class="bg-white p-8 rounded-3xl shadow-xl max-w-sm w-full border-t-4 border-blue-600">
     <div class="text-center mb-8">
-      <!-- LOGO UTAMA -->
-      <img src="logo-jagopos.png" alt="JagoPOS" class="w-20 h-20 mx-auto mb-4 object-contain">
+      <img src="logo-jagopos.png" alt="JagoPOS" class="w-20 h-20 mx-auto mb-4" onerror="this.style.display='none'; document.getElementById('logoFallbackLogin').style.display='flex';">
+      <div id="logoFallbackLogin" class="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-4xl mx-auto shadow-lg shadow-blue-500/30 mb-4" style="display:none;">J</div>
       <h1 class="text-2xl font-black text-slate-800">JagoPOS</h1>
       <p class="text-xs text-slate-500 mt-1">Sistem Kasir Cerdas</p>
     </div>
@@ -98,7 +88,8 @@
 
   <div id="boxRegister" class="bg-white p-8 rounded-3xl shadow-xl max-w-sm w-full border-t-4 border-emerald-500 hidden">
     <div class="text-center mb-6">
-      <img src="logo-jagopos.png" alt="JagoPOS" class="w-16 h-16 mx-auto mb-3 object-contain">
+      <img src="logo-jagopos.png" alt="JagoPOS" class="w-16 h-16 mx-auto mb-3" onerror="this.style.display='none'; document.getElementById('logoFallbackRegister').style.display='flex';">
+      <div id="logoFallbackRegister" class="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center text-white font-black text-3xl mx-auto shadow-lg shadow-emerald-500/30 mb-3" style="display:none;">J</div>
       <h1 class="text-xl font-black text-slate-800">Daftar Toko</h1>
       <p class="text-xs text-slate-400">Cloud database otomatis</p>
     </div>
@@ -135,9 +126,7 @@
 <!-- MODAL LUPA PASSWORD -->
 <div id="modalLupaPassword" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[9999] hidden items-center justify-center">
   <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full">
-    <div class="flex justify-center mb-4">
-      <img src="favicon-jagopos.png" alt="JagoPOS" class="w-12 h-12 object-contain">
-    </div>
+    <img src="favicon-jagopos.png" alt="JagoPOS" class="w-12 h-12 mx-auto mb-4" onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\"w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-2xl mx-auto mb-4\">J</div>'">
     <h2 class="text-xl font-black text-slate-800 text-center mb-4">🔐 Lupa Password</h2>
     <p class="text-xs text-slate-500 text-center mb-4">Masukkan email terdaftar, kami kirimkan password Anda.</p>
     <input id="inputLupaEmail" type="email" placeholder="Email Terdaftar" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-600 outline-none text-sm mb-4">
@@ -151,8 +140,7 @@
 <!-- ============================================================= -->
 <div id="sidebarUI" class="fixed left-0 top-0 h-full w-20 bg-slate-900 flex flex-col items-center py-6 justify-between border-r border-slate-800 z-50 hidden">
   <div class="flex flex-col items-center space-y-6 w-full">
-    <!-- LOGO SIDEBAR -->
-    <img src="logo-jagopos.png" alt="JagoPOS" class="w-12 h-12 rounded-xl shadow-lg shadow-blue-500/30 object-contain">
+    <img src="logo-jagopos.png" alt="JagoPOS" class="w-12 h-12 rounded-xl shadow-lg shadow-blue-500/30" onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\"w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/30\">J</div>'">
     <nav class="flex flex-col space-y-2 w-full px-2">
       <button onclick="bukaHalaman('pageKasir')" id="nav-pageKasir" class="sidebar-btn active w-full p-3.5 rounded-xl flex flex-col items-center justify-center gap-1 text-white bg-blue-600"><i class="fa-solid fa-cash-register text-lg"></i><span class="text-[9px] font-medium">Kasir</span></button>
       <button onclick="bukaHalaman('pageDashboard'); muatDashboard();" id="nav-pageDashboard" class="sidebar-btn admin-only w-full p-3.5 rounded-xl flex flex-col items-center justify-center gap-1 text-slate-400 hover:bg-slate-800 hover:text-white"><i class="fa-solid fa-chart-pie text-lg"></i><span class="text-[9px] font-medium">Analitik</span></button>
@@ -174,7 +162,7 @@
   <!-- HEADER -->
   <div class="bg-white h-14 border-b border-slate-200 flex justify-between items-center px-6 shadow-sm shrink-0">
     <div class="flex items-center gap-3">
-      <img src="favicon-jagopos.png" alt="JagoPOS" class="w-8 h-8 object-contain">
+      <img src="favicon-jagopos.png" alt="JagoPOS" class="w-8 h-8" onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\"w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-black text-sm\">J</div>'">
       <span class="text-sm font-bold text-slate-800" id="labelTokoHeader">Toko Anda</span>
       <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-black"><i class="fa-solid fa-cloud-arrow-up mr-1"></i> SYNC</span>
     </div>
@@ -192,15 +180,12 @@
 
     <!-- ===== PAGE 1: KASIR ===== -->
     <div id="pageKasir" class="absolute inset-0 flex pos-layout bg-slate-100 page-section">
-
-      <!-- KIRI: KATALOG PRODUK -->
       <div class="pos-katalog w-2/3 flex flex-col h-full p-6">
         <div class="relative mb-5 shadow-sm">
           <i class="fa-solid fa-barcode absolute left-4 top-3.5 text-slate-400 text-lg"></i>
           <input id="inputCariProduk" type="text" placeholder="Scan barcode atau cari nama produk..." class="w-full pl-12 pr-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-sm font-medium outline-none transition-all" onkeypress="handleScanner(event, this.value)">
           <button onclick="cariProdukKasir(document.getElementById('inputCariProduk').value)" class="absolute right-2 top-2 bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">Cari</button>
         </div>
-
         <div class="flex justify-between items-end mb-4">
           <div id="kategoriContainer" class="flex space-x-2 overflow-x-auto pb-1">
             <button onclick="filterKategori('Semua', event)" class="cat-btn bg-blue-600 text-white shadow-md shadow-blue-600/20 px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border border-blue-600">Semua</button>
@@ -213,20 +198,17 @@
             <option value="Gudang Cabang">🏪 Gudang Cabang</option>
           </select>
         </div>
-
         <div class="flex-1 overflow-y-auto pr-2 pb-10">
           <div id="gridProdukKasir" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4"></div>
           <div id="loadingKatalog" class="text-center py-20 text-slate-400 hidden"><i class="fa-solid fa-spinner fa-spin text-3xl mb-3 text-blue-300 block"></i> Memuat menu...</div>
         </div>
       </div>
 
-      <!-- KANAN: KERANJANG -->
       <div class="pos-keranjang w-1/3 bg-white border-l border-slate-200 flex flex-col justify-between h-full shadow-2xl z-10 relative">
         <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white z-10">
           <h2 class="text-sm font-extrabold text-slate-800"><i class="fa-solid fa-basket-shopping text-blue-600 mr-2"></i> Pesanan</h2>
           <button onclick="kosongkanKeranjang()" class="text-[10px] font-bold text-red-500 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors">Kosongkan</button>
         </div>
-
         <div class="flex-1 overflow-y-auto p-6 bg-slate-50/50">
           <div id="listKeranjang" class="space-y-4">
             <div class="text-center py-20 opacity-50">
@@ -235,7 +217,6 @@
             </div>
           </div>
         </div>
-
         <div class="p-6 bg-white border-t border-slate-200 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.02)] relative z-10">
           <div class="space-y-2.5 text-xs font-semibold text-slate-500 mb-5">
             <div class="flex justify-between"><span>Subtotal</span><span id="txtSubtotal">Rp 0</span></div>
@@ -772,10 +753,10 @@
   }
 
   // ===== LAPORAN =====
-  async function muatLaporanCustom() {
-    const start = document.getElementById('startDate').value;
-    const end = document.getElementById('endDate').value;
-    if (!start || !end) return showToast("Pilih tanggal", "warning");
+  async function muatLaporan() {
+    const start = document.getElementById('startDate').value || new Date().toISOString().split('T')[0];
+    const end = document.getElementById('endDate').value || new Date().toISOString().split('T')[0];
+    if (!start || !end) { showToast("Pilih tanggal dulu", "warning"); return; }
     document.getElementById('loadingLaporan').classList.remove('hidden');
     document.getElementById('kontenLaporan').innerHTML = '';
     try {
@@ -785,6 +766,8 @@
       safeSetHTML('kontenLaporan', res.items.map(i => `<div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border"><div><span class="font-bold">${i.nama}</span> <span class="text-xs text-slate-400">(${i.qty}x)</span></div><div class="font-bold text-emerald-600">Rp ${i.total.toLocaleString()}</div></div>`).join(''));
     } catch(e) { showToast("Gagal muat laporan", "error"); document.getElementById('loadingLaporan').classList.add('hidden'); }
   }
+
+  async function muatLaporanCustom() { await muatLaporan(); }
 
   async function exportExcelReport() {
     const start = document.getElementById('startDate').value || new Date().toISOString().split('T')[0];
