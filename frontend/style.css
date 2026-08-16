@@ -1,0 +1,14 @@
+/* frontend/style.css - small UI polish */
+body{font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial}
+/* minimal overrides for Tailwind fallback */
+
+#syncStatusBadge{position:fixed;right:16px;top:16px;z-index:9999}
+
+/* product card improvements (used by pos-ui) */
+.product-card{transition:all .12s ease;border-radius:.75rem;padding:12px;background:white}
+.product-card:hover{transform:translateY(-4px);box-shadow:0 10px 30px rgba(2,6,23,0.06)}
+
+/* cart list */
+.cart-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #f1f5f9}
+
+.hidden{display:none}
