@@ -11,7 +11,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     /* ================================================================
-       ROOT VARIABLES & RESET
+       ROOT & RESET
        ================================================================ */
     :root {
       --bg: #f1f5f9;
@@ -48,98 +48,48 @@
       z-index: 100;
       border-right: 1px solid #1e293b;
     }
-    .sidebar .logo {
-      color: #fff;
-      font-weight: 800;
-      font-size: 16px;
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
+    .sidebar .logo { color: #fff; font-weight: 800; font-size: 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 4px; }
     .sidebar .logo i { color: var(--gold); font-size: 20px; }
-    .sidebar nav {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      width: 100%;
-      padding: 0 6px;
-      flex: 1;
-    }
+    .sidebar nav { display: flex; flex-direction: column; gap: 2px; width: 100%; padding: 0 6px; flex: 1; }
     .sidebar nav .nav-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 8px 0;
-      border-radius: var(--radius-sm);
-      color: #94a3b8;
-      cursor: pointer;
-      transition: var(--transition);
-      font-size: 8px;
-      font-weight: 600;
-      gap: 2px;
-      border: none;
-      background: transparent;
-      width: 100%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 8px 0; border-radius: var(--radius-sm); color: #94a3b8;
+      cursor: pointer; transition: var(--transition); font-size: 8px; font-weight: 600;
+      gap: 2px; border: none; background: transparent; width: 100%;
     }
     .sidebar nav .nav-item i { font-size: 16px; }
     .sidebar nav .nav-item:hover { background: #1e293b; color: #fff; }
     .sidebar nav .nav-item.active { background: #2563eb; color: #fff; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
     .sidebar nav .nav-item.nav-bottom { margin-top: auto; }
     .sidebar .user-badge {
-      color: #94a3b8;
-      font-size: 7px;
-      text-align: center;
-      border-top: 1px solid #1e293b;
-      padding-top: 8px;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
+      color: #94a3b8; font-size: 7px; text-align: center;
+      border-top: 1px solid #1e293b; padding-top: 8px;
+      width: 100%; display: flex; flex-direction: column; align-items: center; gap: 2px;
     }
     .sidebar .user-badge span {
-      background: #2563eb;
-      color: #fff;
-      padding: 2px 6px;
-      border-radius: 20px;
-      font-size: 6px;
-      font-weight: 700;
+      background: #2563eb; color: #fff; padding: 2px 6px; border-radius: 20px; font-size: 6px; font-weight: 700;
     }
 
     /* ================================================================
        MAIN CONTENT
        ================================================================ */
-    .main-container {
-      flex: 1;
-      height: 100vh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      background: var(--bg);
-    }
+    .main-container { flex: 1; height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: var(--bg); }
     .main-header {
-      background: #fff;
-      padding: 8px 20px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-shrink: 0;
-      min-height: 48px;
+      background: #fff; padding: 8px 20px; border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; min-height: 48px;
     }
     .main-header .left { display: flex; align-items: center; gap: 10px; }
     .main-header .left h2 { font-size: 15px; font-weight: 700; }
     .main-header .left .sync-badge {
-      background: #dcfce7; color: #166534;
-      padding: 2px 8px; border-radius: 30px;
-      font-size: 8px; font-weight: 700;
+      background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 30px; font-size: 8px; font-weight: 700;
     }
     .main-header .right { display: flex; align-items: center; gap: 10px; }
     .main-header .right .user-info { text-align: right; line-height: 1.2; }
     .main-header .right .user-info .name { font-size: 11px; font-weight: 700; }
     .main-header .right .user-info .role { font-size: 8px; color: var(--muted); text-transform: uppercase; }
+    .main-header .right .role-badge {
+      background: #2563eb; color: #fff; padding: 2px 8px; border-radius: 30px; font-size: 8px; font-weight: 700;
+    }
     .main-header .right .avatar {
       width: 28px; height: 28px; background: #2563eb; color: #fff;
       border-radius: 50%; display: flex; align-items: center; justify-content: center;
@@ -160,42 +110,19 @@
     /* ================================================================
        COMPONENTS
        ================================================================ */
-    .card {
-      background: #fff; border-radius: var(--radius);
-      box-shadow: var(--shadow); border: 1px solid var(--border);
-      padding: 12px 14px; margin-bottom: 12px;
-    }
-    .stat-grid {
-      display: grid; grid-template-columns: repeat(4, 1fr);
-      gap: 10px; margin-bottom: 12px;
-    }
-    .stat-card {
-      background: #fff; padding: 10px 14px;
-      border-radius: var(--radius); border: 1px solid var(--border);
-    }
-    .stat-card .label {
-      font-size: 9px; font-weight: 600; color: var(--muted);
-      text-transform: uppercase; letter-spacing: 0.3px;
-    }
-    .stat-card .value {
-      font-size: 18px; font-weight: 800; color: #0f172a; margin-top: 2px;
-    }
+    .card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); padding: 12px 14px; margin-bottom: 12px; }
+    .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
+    .stat-card { background: #fff; padding: 10px 14px; border-radius: var(--radius); border: 1px solid var(--border); }
+    .stat-card .label { font-size: 9px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; }
+    .stat-card .value { font-size: 18px; font-weight: 800; color: #0f172a; margin-top: 2px; }
     .stat-card .value.green { color: #22c55e; }
     .stat-card .value.red { color: #ef4444; }
     .stat-card .value.gold { color: var(--gold); }
 
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    @media (max-width: 768px) {
-      .grid-2 { grid-template-columns: 1fr; }
-      .stat-grid { grid-template-columns: 1fr 1fr; }
-    }
+    @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } .stat-grid { grid-template-columns: 1fr 1fr; } }
 
-    .btn {
-      padding: 6px 14px; border-radius: var(--radius-sm);
-      font-weight: 600; border: none; cursor: pointer;
-      transition: var(--transition); display: inline-flex;
-      align-items: center; gap: 5px; font-size: 11px;
-    }
+    .btn { padding: 6px 14px; border-radius: var(--radius-sm); font-weight: 600; border: none; cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; gap: 5px; font-size: 11px; }
     .btn-primary { background: #2563eb; color: #fff; }
     .btn-primary:hover { background: #1d4ed8; }
     .btn-gold { background: var(--gold); color: #0f172a; }
@@ -211,36 +138,16 @@
     .btn-block { width: 100%; }
 
     .form-group { margin-bottom: 10px; }
-    .form-group label {
-      display: block; font-size: 10px; font-weight: 600;
-      color: var(--muted); margin-bottom: 2px;
-    }
-    .form-group input, .form-group select {
-      width: 100%; padding: 6px 10px;
-      background: var(--input); border: 1px solid var(--border);
-      border-radius: var(--radius-sm); font-size: 12px; color: var(--text);
-      transition: var(--transition);
-    }
-    .form-group input:focus, .form-group select:focus {
-      outline: none; border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37,99,235,0.08);
-    }
+    .form-group label { display: block; font-size: 10px; font-weight: 600; color: var(--muted); margin-bottom: 2px; }
+    .form-group input, .form-group select { width: 100%; padding: 6px 10px; background: var(--input); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; color: var(--text); transition: var(--transition); }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
 
-    table {
-      width: 100%; border-collapse: collapse; font-size: 11px;
-    }
-    table th {
-      text-align: left; padding: 6px 8px; background: #f8fafc;
-      font-weight: 600; color: var(--muted); font-size: 9px;
-      text-transform: uppercase; border-bottom: 2px solid var(--border);
-    }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; word-break: break-word; }
+    table th { text-align: left; padding: 6px 8px; background: #f8fafc; font-weight: 600; color: var(--muted); font-size: 9px; text-transform: uppercase; border-bottom: 2px solid var(--border); }
     table td { padding: 6px 8px; border-bottom: 1px solid var(--border); }
     table tr:hover { background: #f8fafc; }
 
-    .badge {
-      padding: 2px 6px; border-radius: 30px;
-      font-size: 8px; font-weight: 700;
-    }
+    .badge { padding: 2px 6px; border-radius: 30px; font-size: 8px; font-weight: 700; }
     .badge-in { background: #dcfce7; color: #166534; }
     .badge-out { background: #fee2e2; color: #991b1b; }
     .badge-test { background: #fef3c7; color: #92400e; }
@@ -248,182 +155,92 @@
     /* ================================================================
        KASIR
        ================================================================ */
-    .kasir-layout {
-      display: flex; gap: 12px; height: 100%; min-height: 360px;
-    }
+    .kasir-layout { display: flex; gap: 12px; height: 100%; min-height: 360px; }
     .kasir-left { flex: 2; display: flex; flex-direction: column; overflow: hidden; }
-    .kasir-right {
-      flex: 1; background: #fff; border-radius: var(--radius);
-      border: 1px solid var(--border); padding: 12px;
-      display: flex; flex-direction: column; box-shadow: var(--shadow);
-    }
-    .kasir-search {
-      display: flex; gap: 6px; margin-bottom: 10px;
-    }
-    .kasir-search input {
-      flex: 1; padding: 6px 10px; background: #fff;
-      border: 1px solid var(--border); border-radius: var(--radius-sm);
-      font-size: 12px;
-    }
-    .kasir-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-      gap: 6px; overflow-y: auto; flex: 1; padding-right: 4px;
-    }
-    .product-card {
-      background: #fff; border: 1px solid var(--border);
-      border-radius: var(--radius-sm); padding: 8px 10px;
-      cursor: pointer; transition: var(--transition); box-shadow: var(--shadow);
-    }
+    .kasir-right { flex: 1; background: #fff; border-radius: var(--radius); border: 1px solid var(--border); padding: 12px; display: flex; flex-direction: column; box-shadow: var(--shadow); }
+    .kasir-search { display: flex; gap: 6px; margin-bottom: 10px; }
+    .kasir-search input { flex: 1; padding: 6px 10px; background: #fff; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; }
+    .kasir-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 6px; overflow-y: auto; flex: 1; padding-right: 4px; max-width: 100%; }
+    .product-card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; cursor: pointer; transition: var(--transition); box-shadow: var(--shadow); }
     .product-card:hover { border-color: #2563eb; transform: translateY(-1px); }
-    .product-card .name {
-      font-weight: 600; font-size: 11px; margin-bottom: 2px;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
+    .product-card .name { font-weight: 600; font-size: 11px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .product-card .price { color: #2563eb; font-weight: 700; font-size: 13px; }
     .product-card .stock { font-size: 9px; color: var(--muted); margin-top: 2px; }
     .product-card .stock.low { color: #ef4444; }
 
-    .cart-item {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 4px 0; border-bottom: 1px solid var(--border); font-size: 11px;
-    }
+    .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--border); font-size: 11px; }
     .cart-item .info { flex: 2; }
     .cart-item .info .name { font-weight: 600; }
     .cart-item .qty-ctrl { display: flex; align-items: center; gap: 3px; }
-    .cart-item .qty-ctrl button {
-      width: 20px; height: 20px; border-radius: 50%;
-      border: 1px solid var(--border); background: transparent;
-      font-weight: 700; cursor: pointer; font-size: 10px;
-    }
+    .cart-item .qty-ctrl button { width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--border); background: transparent; font-weight: 700; cursor: pointer; font-size: 10px; }
     .cart-item .qty-ctrl button:hover { background: var(--input); }
-    .cart-item .price {
-      font-weight: 700; font-size: 11px; min-width: 55px; text-align: right;
-    }
+    .cart-item .price { font-weight: 700; font-size: 11px; min-width: 55px; text-align: right; }
 
-    .cart-summary {
-      border-top: 2px solid var(--border); padding-top: 8px; margin-top: 4px;
-    }
-    .cart-summary .row {
-      display: flex; justify-content: space-between;
-      font-size: 11px; padding: 2px 0;
-    }
-    .cart-summary .row.total {
-      font-size: 15px; font-weight: 800; color: #2563eb;
-      border-top: 1px dashed var(--border); padding-top: 6px; margin-top: 4px;
-    }
-    .cart-summary .row input[type="number"] {
-      width: 50px; text-align: right; border: 1px solid var(--border);
-      border-radius: 4px; padding: 2px 4px; font-size: 11px;
-    }
-    .cart-summary .row input[type="text"] {
-      width: 80px; border: 1px solid var(--border);
-      border-radius: 4px; padding: 2px 4px; font-size: 11px;
-    }
+    .cart-summary { border-top: 2px solid var(--border); padding-top: 8px; margin-top: 4px; }
+    .cart-summary .row { display: flex; justify-content: space-between; font-size: 11px; padding: 2px 0; }
+    .cart-summary .row.total { font-size: 15px; font-weight: 800; color: #2563eb; border-top: 1px dashed var(--border); padding-top: 6px; margin-top: 4px; }
+    .cart-summary .row input[type="number"] { width: 50px; text-align: right; border: 1px solid var(--border); border-radius: 4px; padding: 2px 4px; font-size: 11px; }
+    .cart-summary .row input[type="text"] { width: 80px; border: 1px solid var(--border); border-radius: 4px; padding: 2px 4px; font-size: 11px; }
+
+    /* ================================================================
+       CHART CONTAINER
+       ================================================================ */
+    .chart-container { height: 180px; position: relative; }
+    .chart-container canvas { height: 100% !important; width: 100% !important; }
 
     /* ================================================================
        MODAL
        ================================================================ */
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.35);
-      backdrop-filter: blur(3px); display: none;
-      align-items: center; justify-content: center; z-index: 9999;
-    }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); backdrop-filter: blur(3px); display: none; align-items: center; justify-content: center; z-index: 9999; }
     .modal-overlay.active { display: flex; }
-    .modal-box {
-      background: #fff; border-radius: 16px; padding: 20px;
-      max-width: 480px; width: 95%; max-height: 85vh;
-      overflow-y: auto; box-shadow: 0 16px 48px rgba(0,0,0,0.15);
-    }
-    .modal-box .modal-header {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 14px;
-    }
+    .modal-box { background: #fff; border-radius: 16px; padding: 20px; max-width: 480px; width: 95%; max-height: 85vh; overflow-y: auto; box-shadow: 0 16px 48px rgba(0,0,0,0.15); }
+    .modal-box .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
     .modal-box .modal-header h3 { font-size: 16px; font-weight: 700; }
-    .modal-box .modal-close {
-      background: none; border: none; font-size: 20px;
-      cursor: pointer; color: var(--muted);
-    }
+    .modal-box .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted); }
 
     /* ================================================================
        RECEIPT
        ================================================================ */
-    .receipt-content {
-      font-family: 'Courier New', monospace; font-size: 10px; color: #000;
-      background: #fff; padding: 14px; max-width: 100%;
-    }
-    .receipt-content .title {
-      font-size: 15px; font-weight: 800; text-align: center; color: #d4af37;
-    }
+    .receipt-content { font-family: 'Courier New', monospace; font-size: 10px; color: #000; background: #fff; padding: 14px; max-width: 100%; }
+    .receipt-content .title { font-size: 15px; font-weight: 800; text-align: center; color: #d4af37; }
     .receipt-content .sub { text-align: center; font-size: 8px; color: #555; }
     .receipt-content .divider { border-top: 1px dashed #ccc; margin: 5px 0; }
-    .receipt-content .row {
-      display: flex; justify-content: space-between; font-size: 9px; padding: 2px 0;
-    }
-    .receipt-content .row.total {
-      font-size: 13px; font-weight: 800; color: #d4af37;
-    }
+    .receipt-content .row { display: flex; justify-content: space-between; font-size: 9px; padding: 2px 0; }
+    .receipt-content .row.total { font-size: 13px; font-weight: 800; color: #d4af37; }
 
     /* ================================================================
        TOAST
        ================================================================ */
-    .toast-container {
-      position: fixed; top: 12px; right: 12px; z-index: 99999;
-      display: flex; flex-direction: column; gap: 6px; max-width: 340px;
-    }
-    .toast {
-      background: #0f172a; color: #fff; padding: 10px 16px;
-      border-radius: var(--radius-sm); box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-      font-size: 12px; font-weight: 500;
-      animation: slideInRight 0.25s ease-out;
-      display: flex; align-items: center; gap: 8px;
-    }
+    .toast-container { position: fixed; top: 12px; right: 12px; z-index: 99999; display: flex; flex-direction: column; gap: 6px; max-width: 340px; }
+    .toast { background: #0f172a; color: #fff; padding: 10px 16px; border-radius: var(--radius-sm); box-shadow: 0 6px 20px rgba(0,0,0,0.15); font-size: 12px; font-weight: 500; animation: slideInRight 0.25s ease-out; display: flex; align-items: center; gap: 8px; }
     .toast.success { background: #22c55e; }
     .toast.error { background: #ef4444; }
     .toast.warning { background: #f59e0b; color: #0f172a; }
-    .toast .toast-close {
-      background: none; border: none; color: rgba(255,255,255,0.7);
-      cursor: pointer; font-size: 14px; margin-left: auto;
-    }
-    @keyframes slideInRight {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
+    .toast .toast-close { background: none; border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 14px; margin-left: auto; }
+    @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    /* ================================================================
+       LOADING
+       ================================================================ */
+    #globalLoader { position: fixed; inset: 0; background: rgba(0,0,0,0.25); backdrop-filter: blur(2px); z-index: 99999; display: flex; align-items: center; justify-content: center; transition: opacity 0.3s ease; }
+    #globalLoader.hidden { opacity: 0; pointer-events: none; }
+    #globalLoader .loader-box { background: #fff; padding: 16px 28px; border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 10px; }
+    #globalLoader .loader-box i { font-size: 18px; color: #2563eb; }
 
     /* ================================================================
        AUTH
        ================================================================ */
-    .auth-container {
-      position: fixed; inset: 0; z-index: 9000;
-      background: #f1f5f9; display: flex;
-      align-items: center; justify-content: center;
-    }
-    .auth-box {
-      background: #fff; padding: 28px; border-radius: 20px;
-      box-shadow: 0 16px 48px rgba(0,0,0,0.06);
-      max-width: 360px; width: 100%; border-top: 4px solid #2563eb;
-    }
+    .auth-container { position: fixed; inset: 0; z-index: 9000; background: #f1f5f9; display: flex; align-items: center; justify-content: center; }
+    .auth-box { background: #fff; padding: 28px; border-radius: 20px; box-shadow: 0 16px 48px rgba(0,0,0,0.06); max-width: 360px; width: 100%; border-top: 4px solid #2563eb; }
     .auth-box .logo-center { text-align: center; margin-bottom: 16px; }
-    .auth-box .logo-center .logo-placeholder {
-      width: 48px; height: 48px; background: #2563eb;
-      border-radius: 12px; display: flex; align-items: center;
-      justify-content: center; color: #fff; font-weight: 800; font-size: 22px;
-      margin: 0 auto 6px;
-    }
-    .auth-box .logo-center h1 {
-      font-size: 22px; font-weight: 800; color: #0f172a;
-    }
+    .auth-box .logo-center .logo-placeholder { width: 48px; height: 48px; background: #2563eb; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 22px; margin: 0 auto 6px; }
+    .auth-box .logo-center h1 { font-size: 22px; font-weight: 800; color: #0f172a; }
     .auth-box .logo-center h1 span { color: #d4af37; }
     .auth-box .logo-center p { font-size: 10px; color: var(--muted); }
-
     .auth-box .form-group { margin-bottom: 10px; position: relative; }
     .auth-box .form-group input { padding: 8px 12px; font-size: 12px; }
     .auth-box .btn { padding: 8px; font-size: 13px; }
-
-    .eye-toggle {
-      position: absolute; right: 10px; bottom: 8px;
-      background: none; border: none; color: var(--muted);
-      cursor: pointer; font-size: 14px;
-    }
+    .eye-toggle { position: absolute; right: 10px; bottom: 8px; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; }
 
     .hidden { display: none !important; }
     .flex { display: flex; }
@@ -440,10 +257,7 @@
     @media print {
       body * { visibility: hidden !important; }
       #strukPrintArea, #strukPrintArea * { visibility: visible !important; }
-      #strukPrintArea {
-        position: absolute; left: 0; top: 0;
-        width: 58mm; padding: 3mm; background: white;
-      }
+      #strukPrintArea { position: absolute; left: 0; top: 0; width: 58mm; padding: 3mm; background: white; }
       .no-print { display: none !important; }
     }
 
@@ -464,6 +278,16 @@
 <body>
 
   <!-- ============================================================= -->
+  <!-- LOADING OVERLAY                                              -->
+  <!-- ============================================================= -->
+  <div id="globalLoader" class="hidden">
+    <div class="loader-box">
+      <i class="fa-solid fa-circle-notch fa-spin"></i>
+      <span id="loaderText">Memproses...</span>
+    </div>
+  </div>
+
+  <!-- ============================================================= -->
   <!-- TOAST CONTAINER                                              -->
   <!-- ============================================================= -->
   <div id="toastContainer" class="toast-container"></div>
@@ -472,7 +296,6 @@
   <!-- AUTH: LOGIN & REGISTER                                       -->
   <!-- ============================================================= -->
   <div id="authContainer" class="auth-container">
-    <!-- BOX LOGIN -->
     <div id="boxLogin" class="auth-box">
       <div class="logo-center">
         <img src="logo-jagopos.png" alt="JagoPOS" style="width:48px;height:48px;margin:0 auto 6px;display:block;border-radius:12px;object-fit:contain;" onerror="this.style.display='none'; this.parentElement.querySelector('.logo-placeholder').style.display='flex';">
@@ -497,7 +320,6 @@
       </div>
     </div>
 
-    <!-- BOX REGISTER -->
     <div id="boxRegister" class="auth-box hidden">
       <div class="logo-center">
         <img src="logo-jagopos.png" alt="JagoPOS" style="width:44px;height:44px;margin:0 auto 6px;display:block;border-radius:12px;object-fit:contain;" onerror="this.style.display='none'; this.parentElement.querySelector('.logo-placeholder').style.display='flex';">
@@ -570,6 +392,7 @@
           <div class="name" id="headerName">Admin</div>
           <div class="role" id="headerRole">Administrator</div>
         </div>
+        <span class="role-badge" id="roleBadge">Admin</span>
         <div class="avatar" id="headerAvatar">A</div>
       </div>
     </header>
@@ -598,7 +421,9 @@
                 <button class="btn btn-sm btn-outline" onclick="applyDateFilter('month')">Bulan</button>
               </div>
             </div>
-            <canvas id="salesChart" height="170"></canvas>
+            <div class="chart-container">
+              <canvas id="salesChart"></canvas>
+            </div>
           </div>
           <div class="card">
             <h4 style="font-weight:700;font-size:13px;margin-bottom:8px;">🏆 Pareto</h4>
@@ -622,7 +447,6 @@
       <div id="pageKasir" class="page-section">
         <div class="page-title"><i class="fa-solid fa-cash-register" style="color:#2563eb;"></i> Kasir</div>
         <div class="kasir-layout">
-          <!-- KIRI: KATALOG -->
           <div class="kasir-left">
             <div class="kasir-search">
               <input type="text" id="searchKasir" placeholder="Cari nama / SKU / Barcode..." onkeyup="if(event.key==='Enter')cariProdukKasir()">
@@ -634,7 +458,6 @@
             </div>
             <div class="kasir-grid" id="katalogGrid"></div>
           </div>
-          <!-- KANAN: KERANJANG -->
           <div class="kasir-right">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
               <h3 style="font-weight:700;font-size:13px;"><i class="fa-solid fa-basket-shopping" style="color:#2563eb;"></i> Pesanan</h3>
@@ -741,7 +564,6 @@
       <div id="pagePengaturan" class="page-section">
         <div class="page-title"><i class="fa-solid fa-gear" style="color:#2563eb;"></i> Pengaturan Sistem</div>
         <div class="grid-2">
-          <!-- KOLOM KIRI: PRODUK -->
           <div>
             <div class="card">
               <h4 style="font-weight:700;font-size:13px;margin-bottom:8px;">📦 Manajemen Produk</h4>
@@ -769,7 +591,6 @@
               </div>
             </div>
           </div>
-          <!-- KOLOM KANAN: USER & THEME -->
           <div>
             <div class="card">
               <h4 style="font-weight:700;font-size:13px;margin-bottom:8px;">👥 Manajemen User</h4>
@@ -959,6 +780,7 @@
           document.getElementById('sidebar').style.display = 'flex';
           document.getElementById('headerName').textContent = res.nama;
           document.getElementById('headerRole').textContent = res.role;
+          document.getElementById('roleBadge').textContent = res.role;
           document.getElementById('headerAvatar').textContent = res.nama.charAt(0).toUpperCase();
           document.getElementById('badgeName').textContent = res.toko;
           document.getElementById('badgeRole').textContent = res.role;
@@ -1002,15 +824,16 @@
 
     function showLoading(msg) {
       var el = document.getElementById('globalLoader');
-      if (!el) {
-        var div = document.createElement('div');
-        div.id = 'globalLoader';
-        div.innerHTML = '<div style="position:fixed;inset:0;background:rgba(0,0,0,0.25);backdrop-filter:blur(2px);z-index:99999;display:flex;align-items:center;justify-content:center;"><div style="background:#fff;padding:16px 28px;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.1);"><i class="fa-solid fa-circle-notch fa-spin" style="font-size:18px;margin-right:8px;"></i><span id="loaderText">'+msg+'</span></div></div>';
-        document.body.appendChild(div);
-      } else { document.getElementById('loaderText').textContent = msg; el.style.display = 'flex'; }
+      if (el) {
+        document.getElementById('loaderText').textContent = msg;
+        el.classList.remove('hidden');
+      }
     }
 
-    function hideLoading() { var el = document.getElementById('globalLoader'); if (el) el.style.display = 'none'; }
+    function hideLoading() {
+      var el = document.getElementById('globalLoader');
+      if (el) el.classList.add('hidden');
+    }
 
     // ================================================================
     // 6. LOAD DATA
@@ -1092,21 +915,17 @@
     // 7. NAVIGASI
     // ================================================================
     function bukaHalaman(page) {
-      // Sembunyikan semua halaman
       document.querySelectorAll('.page-section').forEach(function(el) { el.classList.remove('active'); });
       var target = document.getElementById('page' + page.charAt(0).toUpperCase() + page.slice(1));
       if (target) target.classList.add('active');
 
-      // Update nav aktif
       document.querySelectorAll('.nav-item').forEach(function(el) { el.classList.remove('active'); });
       var nav = document.querySelector('.nav-item[data-page="' + page + '"]');
       if (nav) nav.classList.add('active');
 
-      // Update judul
       var titles = { dashboard:'Dashboard', kasir:'Kasir', stok:'Stok & Mutasi', laporan:'Laporan & Jurnal', pengaturan:'Pengaturan' };
       document.getElementById('pageTitle').textContent = titles[page] || page;
 
-      // Render konten spesifik per halaman (dengan pengecekan elemen)
       if (page === 'dashboard') renderDashboard();
       if (page === 'stok') { renderSOH(); renderMutasi(); }
       if (page === 'laporan') {
@@ -1146,7 +965,6 @@
       document.getElementById('dashDiscount').textContent = formatRupiah(discount);
       document.getElementById('dashTransaction').textContent = trx;
 
-      // Pareto
       var sales = {};
       filtered.forEach(function(l) {
         if (l.type !== 'JUAL') return;
@@ -1162,18 +980,24 @@
       var bottomHtml = bottom.map(function(item){ return '<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--border);"><span>'+item[0]+'</span><span style="font-weight:700;">'+item[1]+'</span></div>'; }).join('') || '<p style="color:var(--muted);font-size:11px;">Tidak ada data</p>';
       document.getElementById('bottomProducts').innerHTML = bottomHtml;
 
-      // Chart
       var ctx = document.getElementById('salesChart').getContext('2d');
-      if (chartInstance) chartInstance.destroy();
+      if (chartInstance) {
+        chartInstance.destroy();
+        chartInstance = null;
+      }
       var labels = sorted.slice(0,10).map(function(i){ return i[0]; });
       var data = sorted.slice(0,10).map(function(i){ return i[1]; });
       chartInstance = new Chart(ctx, {
         type: 'bar',
         data: { labels: labels, datasets: [{ label: 'Penjualan (Pcs)', data: data, backgroundColor: '#d4af37', borderRadius: 3 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { drawBorder: false } } } }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, grid: { drawBorder: false } }, x: { grid: { display: false } } }
+        }
       });
 
-      // Alerts
       var alerts = document.getElementById('stockAlerts');
       alerts.innerHTML = '';
       for (var sku in inventory) {
@@ -1210,7 +1034,7 @@
     }
 
     // ================================================================
-    // 9. KASIR (LANGSUNG MASUK KERANJANG, TANPA POPUP)
+    // 9. KASIR
     // ================================================================
     function muatProdukKasir() {
       var grid = document.getElementById('katalogGrid');
@@ -1520,7 +1344,7 @@
     }
 
     // ================================================================
-    // 13. STOK (SOH & MUTASI)
+    // 13. STOK
     // ================================================================
     function renderSOH() {
       var keyword = document.getElementById('sohSearch').value.toLowerCase().trim();
@@ -1591,7 +1415,7 @@
         var tipe = l.type === 'MASUK' ? '🟢 MASUK' : '🔴 KELUAR';
         msg += tipe + ' ' + (l.qty||0) + ' Pcs - ' + formatDisplay(l.tanggal) + '\n';
       });
-      alert(msg); // Sementara masih pakai alert karena ini detail
+      alert(msg);
     }
 
     // ================================================================
@@ -1934,7 +1758,7 @@
     }
 
     // ================================================================
-    // 17. USER MANAGEMENT (DENGAN EDIT ROLE)
+    // 17. USER MANAGEMENT
     // ================================================================
     async function renderUsers() {
       try {
@@ -2051,6 +1875,7 @@
             document.getElementById('sidebar').style.display = 'flex';
             document.getElementById('headerName').textContent = sessionUser.nama;
             document.getElementById('headerRole').textContent = sessionUser.role;
+            document.getElementById('roleBadge').textContent = sessionUser.role;
             document.getElementById('headerAvatar').textContent = sessionUser.nama.charAt(0).toUpperCase();
             document.getElementById('badgeName').textContent = sessionUser.toko;
             document.getElementById('badgeRole').textContent = sessionUser.role;
