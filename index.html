@@ -584,8 +584,20 @@ MODAL STRUK
   // 3. AUTH
   // ================================================================
   function toggleAuth(type) {
-    document.getElementById('boxLogin').style.display = type === 'login' ? 'block' : 'none';
-    document.getElementById('boxRegister').style.display = type === 'register' ? 'block' : 'none';
+  var login = document.getElementById('boxLogin');
+  var register = document.getElementById('boxRegister');
+  if (!login || !register) return;
+
+  if (type === 'login') {
+    login.style.display = 'block';
+    register.style.display = 'none';
+    login.classList.remove('hidden');
+    register.classList.add('hidden');
+  } else {
+    login.style.display = 'none';
+    register.style.display = 'block';
+    login.classList.add('hidden');
+    register.classList.remove('hidden');
   }
 
   function togglePassword(id, btn) {
