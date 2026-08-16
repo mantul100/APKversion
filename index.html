@@ -241,9 +241,9 @@
   </div>
 </div>
 
-<!-- ============================================================
-SIDEBAR
-============================================================ -->
+<!-- ============================================================ -->
+<!-- SIDEBAR -->
+<!-- ============================================================ -->
 <aside class="sidebar" id="sidebar">
   <div class="logo"><i class="fa-solid fa-crown"></i></div>
   <nav>
@@ -257,9 +257,9 @@ SIDEBAR
   <div class="user-badge"><span id="badgeRole">Admin</span><span id="badgeName" style="font-size:8px;color:#475569;">User</span></div>
 </aside>
 
-<!-- ============================================================
-MAIN CONTENT
-============================================================ -->
+<!-- ============================================================ -->
+<!-- MAIN CONTENT -->
+<!-- ============================================================ -->
 <div class="main-container" id="mainApp">
 
   <header class="main-header">
@@ -272,9 +272,7 @@ MAIN CONTENT
 
   <div class="pages-wrapper">
 
-    <!-- ==========================================================
-    PAGE 1: DASHBOARD
-    ========================================================== -->
+    <!-- PAGE 1: DASHBOARD -->
     <div id="pageDashboard" class="page-section active">
       <div class="page-title"><i class="fa-solid fa-chart-line" style="color:#2563eb;"></i> Dashboard Bisnis</div>
       <div class="stat-grid" id="dashStats">
@@ -311,9 +309,7 @@ MAIN CONTENT
       </div>
     </div>
 
-    <!-- ==========================================================
-    PAGE 2: KASIR
-    ========================================================== -->
+    <!-- PAGE 2: KASIR -->
     <div id="pageKasir" class="page-section">
       <div class="page-title"><i class="fa-solid fa-cash-register" style="color:#2563eb;"></i> Kasir</div>
       <div class="kasir-layout">
@@ -355,9 +351,7 @@ MAIN CONTENT
       </div>
     </div>
 
-    <!-- ==========================================================
-    PAGE 3: STOK
-    ========================================================== -->
+    <!-- PAGE 3: STOK -->
     <div id="pageStok" class="page-section">
       <div class="page-title"><i class="fa-solid fa-box-open" style="color:#2563eb;"></i> Manajemen Stok & SOH</div>
       <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
@@ -394,9 +388,7 @@ MAIN CONTENT
       </div>
     </div>
 
-    <!-- ==========================================================
-    PAGE 4: LAPORAN
-    ========================================================== -->
+    <!-- PAGE 4: LAPORAN -->
     <div id="pageLaporan" class="page-section">
       <div class="page-title"><i class="fa-solid fa-file-invoice" style="color:#2563eb;"></i> Laporan & Jurnal</div>
       <div class="stat-grid" id="profitStats">
@@ -432,9 +424,7 @@ MAIN CONTENT
       </div>
     </div>
 
-    <!-- ==========================================================
-    PAGE 5: PENGATURAN
-    ========================================================== -->
+    <!-- PAGE 5: PENGATURAN -->
     <div id="pagePengaturan" class="page-section">
       <div class="page-title"><i class="fa-solid fa-gear" style="color:#2563eb;"></i> Pengaturan Sistem</div>
       <div class="grid-2">
@@ -502,9 +492,9 @@ MAIN CONTENT
   </div>
 </div>
 
-<!-- ============================================================
-MODAL STRUK
-============================================================ -->
+<!-- ============================================================ -->
+<!-- MODAL STRUK -->
+<!-- ============================================================ -->
 <div id="receiptModal" class="modal-overlay">
   <div class="modal-box" style="max-width:480px;padding:0;overflow:hidden;">
     <div id="strukPrintArea"><div id="receiptBody" style="padding:24px;background:#fff;"></div></div>
@@ -538,7 +528,7 @@ MODAL STRUK
 </div>
 
 <!-- ============================================================ -->
-<!-- JAVASCRIPT FULL ENGINE                                       -->
+<!-- JAVASCRIPT FULL ENGINE -->
 <!-- ============================================================ -->
 <script>
   // ================================================================
@@ -584,20 +574,20 @@ MODAL STRUK
   // 3. AUTH
   // ================================================================
   function toggleAuth(type) {
-  var login = document.getElementById('boxLogin');
-  var register = document.getElementById('boxRegister');
-  if (!login || !register) return;
-
-  if (type === 'login') {
-    login.style.display = 'block';
-    register.style.display = 'none';
-    login.classList.remove('hidden');
-    register.classList.add('hidden');
-  } else {
-    login.style.display = 'none';
-    register.style.display = 'block';
-    login.classList.add('hidden');
-    register.classList.remove('hidden');
+    var login = document.getElementById('boxLogin');
+    var register = document.getElementById('boxRegister');
+    if (!login || !register) return;
+    if (type === 'login') {
+      login.style.display = 'block';
+      register.style.display = 'none';
+      login.classList.remove('hidden');
+      register.classList.add('hidden');
+    } else {
+      login.style.display = 'none';
+      register.style.display = 'block';
+      login.classList.add('hidden');
+      register.classList.remove('hidden');
+    }
   }
 
   function togglePassword(id, btn) {
@@ -813,7 +803,6 @@ MODAL STRUK
     document.getElementById('dashDiscount').textContent = formatRupiah(discount);
     document.getElementById('dashTransaction').textContent = trx;
 
-    // Pareto
     var sales = {};
     filtered.forEach(function(l) {
       if (l.type !== 'JUAL') return;
@@ -829,7 +818,6 @@ MODAL STRUK
     var bottomHtml = bottom.map(function(item){ return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);"><span>'+item[0]+'</span><span style="font-weight:700;">'+item[1]+'</span></div>'; }).join('') || '<p style="color:var(--muted);">Tidak ada data</p>';
     document.getElementById('bottomProducts').innerHTML = bottomHtml;
 
-    // Chart
     var ctx = document.getElementById('salesChart').getContext('2d');
     if (chartInstance) chartInstance.destroy();
     var labels = sorted.slice(0,10).map(function(i){ return i[0]; });
@@ -840,7 +828,6 @@ MODAL STRUK
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
     });
 
-    // Alerts
     var alerts = document.getElementById('stockAlerts');
     alerts.innerHTML = '';
     for (var sku in inventory) {
@@ -893,12 +880,10 @@ MODAL STRUK
       card.innerHTML = '<div class="name">'+p.name+'</div><div class="price">Rp '+harga.toLocaleString()+'</div><div class="stock '+(stok<10?'low':'')+'">Stok: '+stok+' Pcs</div>';
       card.onclick = function() {
         if ((inventory[sku]||0) < 1) { alert('Stok tidak cukup!'); return; }
-        // Tanyakan qty via prompt
         var qty = prompt('Masukkan jumlah ' + p.name + ' (1-'+ (inventory[sku]||0) +'):', '1');
         if (!qty || parseInt(qty) <= 0) return;
         qty = parseInt(qty);
         if ((inventory[sku]||0) < qty) { alert('Stok tidak cukup! Tersisa: '+(inventory[sku]||0)); return; }
-        // Pilih jenis harga
         var tipe = prompt('Pilih jenis harga:\n1. Retail ('+p.hargaRetail+')\n2. Grosir ('+(p.hargaGrosir||p.hargaRetail)+')\n3. Member ('+(p.hargaMember||p.hargaRetail)+')', '1');
         var price = p.hargaRetail;
         if (tipe === '2') price = p.hargaGrosir || p.hargaRetail;
@@ -1067,9 +1052,7 @@ MODAL STRUK
       });
       hideLoading();
       if (res.status === 'sukses' || res.idTransaksi) {
-        // Update stok lokal
         cart.forEach(function(item) { inventory[item.sku] -= item.qty; });
-        // Log lokal
         cart.forEach(function(item) {
           logs.unshift({
             idTransaksi: res.idTransaksi,
@@ -1249,23 +1232,19 @@ MODAL STRUK
   // ================================================================
   function switchLaporanMode(mode) {
     laporanMode = mode;
-    var tanggalAwal = document.getElementById('startDateLaporan') ? document.getElementById('startDateLaporan').value : '';
-    var tanggalAkhir = document.getElementById('endDateLaporan') ? document.getElementById('endDateLaporan').value : '';
-    muatLaporanCustom(tanggalAwal, tanggalAkhir);
+    muatLaporanCustom();
   }
 
   async function muatLaporanCustom() {
     var start = document.getElementById('startDateLaporan') ? document.getElementById('startDateLaporan').value : '';
     var end = document.getElementById('endDateLaporan') ? document.getElementById('endDateLaporan').value : '';
     if (!start || !end) {
-      // Default 30 hari terakhir
       var d = new Date();
       var endD = d.toISOString().split('T')[0];
       d.setDate(d.getDate()-30);
       var startD = d.toISOString().split('T')[0];
       if (!document.getElementById('startDateLaporan')) {
-        // Buat filter tanggal dulu jika belum ada
-        var filterDiv = document.querySelector('.card:first-child .flex-wrap');
+        var filterDiv = document.querySelector('#pageLaporan .card:first-child .flex-wrap');
         if (filterDiv) {
           filterDiv.innerHTML += '<input type="date" id="startDateLaporan" value="'+startD+'" style="padding:6px;border:1px solid var(--border);border-radius:4px;">';
           filterDiv.innerHTML += '<span style="font-size:12px;">s/d</span>';
@@ -1392,7 +1371,6 @@ MODAL STRUK
         alert('✅ '+parsed.length+' transaksi diimpor!');
         renderDashboard();
         searchReceipt();
-        saveToCloud();
       };
       reader.readAsText(file);
     };
@@ -1693,16 +1671,7 @@ MODAL STRUK
   function saveTheme() { applyTheme(); alert('✅ Tema disimpan!'); }
 
   // ================================================================
-  // 19. SAVE TO CLOUD (MANUAL)
-  // ================================================================
-  function saveToCloud() {
-    // Logs dan inventory sudah diupdate lokal
-    // Untuk amannya, kita kirim ke cloud via loadData
-    return loadData();
-  }
-
-  // ================================================================
-  // 20. INIT
+  // 19. INIT
   // ================================================================
   window.onload = function() {
     var saved = localStorage.getItem('jagopos_session');
@@ -1731,7 +1700,7 @@ MODAL STRUK
     } else {
       toggleAuth('login');
     }
-  }
+  };
 </script>
 </body>
 </html>
