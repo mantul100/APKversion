@@ -276,7 +276,7 @@
     <!-- ===== PAGE 3: INVENTORY ===== -->
     <div id="pageInventory" class="absolute inset-0 p-6 overflow-y-auto page-section hidden">
       <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-        <h2 class="text-lg font-black text-slate-800 mb-6"><i class="fa-solid fa-box text-blue-600 mr-2"></i> Stok Barang</h2>
+        <h2 class="text-lg font-black text-slate-800 mb-6"><i class="fa-solid fa-box text-blue-600 mr-2"></i> Stok Barang & Inventory</h2>
         <div id="statusLoadingStok" class="text-center py-10 text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Memuat...</div>
         <div id="listInventory" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
       </div>
@@ -717,7 +717,6 @@
       const item = cacheProduk.find(p => p.id === i.id);
       if (item) {
         let baseH = item[tipe] || item.hargaUmum;
-        // pertahankan selisih modifier jika ada
         let diff = i.harga - (i.baseRef || baseH);
         i.baseRef = baseH;
         i.harga = baseH + (diff > 0 ? diff : 0);
