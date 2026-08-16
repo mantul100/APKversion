@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mantul POS • Mokapos Style</title>
+  <title>JagoPOS • Sistem Kasir Cerdas</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -69,17 +69,15 @@
 <div id="authContainer" class="fixed inset-0 z-[9000] flex items-center justify-center bg-slate-100">
   <div id="boxLogin" class="bg-white p-8 rounded-3xl shadow-xl max-w-sm w-full border-t-4 border-blue-600">
     <div class="text-center mb-8">
-      <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-3xl mx-auto shadow-lg shadow-blue-500/30 mb-4">M</div>
-      <h1 class="text-2xl font-black text-slate-800">MANTUL POS</h1>
-      <p class="text-xs text-slate-500 mt-1">Modern Point of Sale</p>
+      <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-3xl mx-auto shadow-lg shadow-blue-500/30 mb-4">J</div>
+      <h1 class="text-2xl font-black text-slate-800">JagoPOS</h1>
+      <p class="text-xs text-slate-500 mt-1">Sistem Kasir Cerdas</p>
     </div>
     <div class="space-y-4">
-      <!-- Input Username/Email dengan icon -->
       <div class="relative">
         <i class="fa-solid fa-envelope absolute left-4 top-3.5 text-slate-400"></i>
         <input id="loginEmail" type="text" placeholder="Username atau Email" class="w-full pl-11 pr-4 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-600 outline-none text-sm">
       </div>
-      <!-- Input Password dengan tombol mata -->
       <div class="relative">
         <i class="fa-solid fa-lock absolute left-4 top-3.5 text-slate-400"></i>
         <input id="loginPassword" type="password" placeholder="Password" class="w-full pl-11 pr-12 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-600 outline-none text-sm" onkeypress="if(event.key==='Enter') prosesLogin()">
@@ -102,9 +100,26 @@
     </div>
     <div class="space-y-3">
       <input id="regNamaToko" type="text" placeholder="Nama Toko" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-none text-sm">
-      <input id="regEmail" type="email" placeholder="Email Admin (untuk login)" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-none text-sm">
-      <input id="regUsername" type="text" placeholder="Username Admin" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-none text-sm">
-      <input id="regPassword" type="password" placeholder="Password" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-none text-sm">
+      <input id="regEmail" type="email" placeholder="Email Admin" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-none text-sm">
+      <input id="regUsername" type="text" placeholder="Username" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-none text-sm">
+      
+      <div class="relative">
+        <i class="fa-solid fa-lock absolute left-4 top-3.5 text-slate-400"></i>
+        <input id="regPassword" type="password" placeholder="Password" class="w-full pl-11 pr-12 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-none text-sm">
+        <button onclick="togglePasswordVisibility('regPassword', this)" type="button" class="absolute right-3 top-3 text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-eye"></i>
+        </button>
+      </div>
+
+      <div class="relative">
+        <i class="fa-solid fa-lock absolute left-4 top-3.5 text-slate-400"></i>
+        <input id="regConfirmPassword" type="password" placeholder="Konfirmasi Password" class="w-full pl-11 pr-12 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-none text-sm">
+        <button onclick="togglePasswordVisibility('regConfirmPassword', this)" type="button" class="absolute right-3 top-3 text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-eye"></i>
+        </button>
+      </div>
+      <small id="regPasswordMatch" class="text-xs hidden"></small>
+
       <button onclick="prosesDaftar()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95">BUAT AKUN</button>
     </div>
     <div class="text-center mt-6">
@@ -113,13 +128,11 @@
   </div>
 </div>
 
-<!-- ============================================================= -->
-<!-- MODAL LUPA PASSWORD                                           -->
-<!-- ============================================================= -->
+<!-- MODAL LUPA PASSWORD -->
 <div id="modalLupaPassword" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[9999] hidden items-center justify-center">
   <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full">
     <h2 class="text-xl font-black text-slate-800 text-center mb-4">🔐 Lupa Password</h2>
-    <p class="text-xs text-slate-500 text-center mb-4">Masukkan email yang terdaftar, kami akan kirim password Anda.</p>
+    <p class="text-xs text-slate-500 text-center mb-4">Masukkan email terdaftar, kami kirimkan password Anda.</p>
     <input id="inputLupaEmail" type="email" placeholder="Email Terdaftar" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-600 outline-none text-sm mb-4">
     <button onclick="prosesLupaPassword()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-600/20 transition-all">Kirim Password</button>
     <button onclick="tutupModalLupaPassword()" class="w-full mt-3 text-xs text-slate-500 hover:text-slate-700 font-medium">Batal</button>
@@ -131,7 +144,7 @@
 <!-- ============================================================= -->
 <div id="sidebarUI" class="fixed left-0 top-0 h-full w-20 bg-slate-900 flex flex-col items-center py-6 justify-between border-r border-slate-800 z-50 hidden">
   <div class="flex flex-col items-center space-y-6 w-full">
-    <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/30">M</div>
+    <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/30">J</div>
     <nav class="flex flex-col space-y-2 w-full px-2">
       <button onclick="bukaHalaman('pageKasir')" id="nav-pageKasir" class="sidebar-btn active w-full p-3.5 rounded-xl flex flex-col items-center justify-center gap-1 text-white bg-blue-600"><i class="fa-solid fa-cash-register text-lg"></i><span class="text-[9px] font-medium">Kasir</span></button>
       <button onclick="bukaHalaman('pageDashboard'); muatDashboard();" id="nav-pageDashboard" class="sidebar-btn admin-only w-full p-3.5 rounded-xl flex flex-col items-center justify-center gap-1 text-slate-400 hover:bg-slate-800 hover:text-white"><i class="fa-solid fa-chart-pie text-lg"></i><span class="text-[9px] font-medium">Analitik</span></button>
@@ -424,9 +437,27 @@
 
   // ===== AUTH =====
   window.onload = function() {
-    const saved = localStorage.getItem("mantulOS_ProData");
+    const saved = localStorage.getItem("jagopos_data");
     if (saved) { try { sessionUser = JSON.parse(saved); tampilkanMainApp(); } catch(e) { toggleAuth('login'); } }
     else toggleAuth('login');
+
+    // Event listener konfirmasi password
+    document.getElementById('regConfirmPassword')?.addEventListener('input', function() {
+      var pwd = document.getElementById('regPassword').value;
+      var confirm = this.value;
+      var el = document.getElementById('regPasswordMatch');
+      if (pwd && confirm && pwd === confirm) {
+        el.classList.remove('hidden');
+        el.className = 'text-xs text-emerald-600 block mt-1';
+        el.innerText = '✅ Password cocok';
+      } else if (pwd && confirm && pwd !== confirm) {
+        el.classList.remove('hidden');
+        el.className = 'text-xs text-red-500 block mt-1';
+        el.innerText = '❌ Password tidak cocok';
+      } else {
+        el.classList.add('hidden');
+      }
+    });
   };
 
   let sessionUser = { nama: "", role: "", toko: "", email: "", sheetId: "" };
@@ -444,8 +475,13 @@
     const e = document.getElementById('regEmail').value;
     const u = document.getElementById('regUsername').value;
     const p = document.getElementById('regPassword').value;
-    if (!n || !e || !u || !p) return showToast("Lengkapi semua form!", "error");
+    const c = document.getElementById('regConfirmPassword').value;
+
+    if (!n || !e || !u || !p || !c) return showToast("Lengkapi semua form!", "error");
+    if (p !== c) return showToast("Password tidak cocok!", "error");
     if (!e.includes('@')) return showToast("Email tidak valid!", "error");
+    if (p.length < 6) return showToast("Password minimal 6 karakter!", "error");
+
     showLoading(true, "Membuat database...");
     try {
       const res = await callAPI('registerTokoBaru', { namaToko: n, email: e, username: u, password: p });
@@ -465,7 +501,7 @@
       showLoading(false);
       if (res.status === "sukses") {
         sessionUser = { nama: res.nama, role: res.role, toko: res.toko, email: e, sheetId: res.sheetId };
-        localStorage.setItem("mantulOS_ProData", JSON.stringify(sessionUser));
+        localStorage.setItem("jagopos_data", JSON.stringify(sessionUser));
         showToast("Login berhasil!", "success");
         tampilkanMainApp();
       } else showToast(res.pesan, "error");
@@ -473,7 +509,7 @@
   }
 
   function prosesLogout() {
-    localStorage.removeItem("mantulOS_ProData");
+    localStorage.removeItem("jagopos_data");
     window.location.reload();
   }
 
@@ -659,13 +695,12 @@
         metodeBayar: metode,
         kasir: sessionUser.nama,
         gudang: document.getElementById('pilihGudang').value,
-        tipeHarga: document.getElementById('pilihJenisHarga').value,
         customer: "Umum"
       }, sessionUser.sheetId);
       showLoading(false);
       if (res.status === 'sukses' || res.idTransaksi) {
         showToast("Transaksi berhasil!", "success");
-        cetakStrukThermal(res.idTransaksi || 'TRX-' + Date.now(), metode, bayar, bayar - totalTagihanGlobal);
+        cetakStrukThermal(res.idTransaksi || 'JGP-' + Date.now(), metode, bayar, bayar - totalTagihanGlobal);
         kosongkanKeranjang();
         muatProdukKasir();
       } else showToast(res.pesan || "Gagal checkout", "error");
@@ -674,7 +709,7 @@
 
   function cetakStrukThermal(idTrx, metode, bayar, kembali) {
     const toko = sessionUser.toko;
-    const footer = document.getElementById('setFooterText')?.value || "Terima kasih";
+    const footer = document.getElementById('setFooterText')?.value || "Terima kasih telah berbelanja di JagoPOS";
     const tgl = new Date().toLocaleString('id-ID');
     let html = `<div style="text-align:center;font-weight:bold;font-size:14px;margin-bottom:5px;">${toko}</div>
       <div style="text-align:center;border-bottom:1px dashed #000;padding-bottom:5px;margin-bottom:5px;font-size:10px;">Tgl: ${tgl}<br>Kasir: ${sessionUser.nama}<br>Trx: ${idTrx}</div>
