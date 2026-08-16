@@ -25,7 +25,6 @@
     .product-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); border-color: #2563eb; }
     .product-card:active { transform: scale(0.97); }
     .modifier-checkbox:checked + div { border-color: #2563eb; background-color: #eff6ff; }
-    .modifier-checkbox:checked + div .text-check { color: #2563eb; }
     @media print {
       body * { visibility: hidden !important; }
       #areaStrukThermal, #areaStrukThermal * { visibility: visible !important; }
@@ -61,11 +60,10 @@
 <!-- AUTH: LOGIN & REGISTER                                        -->
 <!-- ============================================================= -->
 <div id="authContainer" class="fixed inset-0 z-[9000] flex items-center justify-center bg-slate-100">
-  <!-- BOX LOGIN -->
   <div id="boxLogin" class="bg-white p-8 rounded-3xl shadow-xl max-w-sm w-full border-t-4 border-blue-600">
     <div class="text-center mb-8">
-      <img src="logo-jagopos.png" alt="JagoPOS" class="w-20 h-20 mx-auto mb-4 object-contain" onerror="this.style.display='none'; document.getElementById('logoFallbackLogin').style.display='flex';">
-      <div id="logoFallbackLogin" class="w-20 h-20 bg-blue-600 rounded-2xl items-center justify-center text-white font-black text-4xl mx-auto shadow-lg shadow-blue-500/30 mb-4" style="display:none;">J</div>
+      <img src="logo-jagopos.png" alt="JagoPOS" class="w-20 h-20 mx-auto mb-4 object-contain" onerror="this.style.display='none'; document.getElementById('logoFallbackLogin').style.display='flex'">
+      <div id="logoFallbackLogin" class="w-20 h-20 bg-blue-600 rounded-2xl items-center justify-center text-white font-black text-4xl mx-auto shadow-lg shadow-blue-500/30 mb-4" style="display:none">J</div>
       <h1 class="text-2xl font-black text-slate-800">JagoPOS</h1>
       <p class="text-xs text-slate-500 mt-1">Sistem Kasir Cerdas Enterprise</p>
     </div>
@@ -89,11 +87,10 @@
     </div>
   </div>
 
-  <!-- BOX REGISTER -->
   <div id="boxRegister" class="bg-white p-8 rounded-3xl shadow-xl max-w-sm w-full border-t-4 border-emerald-500 hidden">
     <div class="text-center mb-6">
-      <img src="logo-jagopos.png" alt="JagoPOS" class="w-16 h-16 mx-auto mb-3 object-contain" onerror="this.style.display='none'; document.getElementById('logoFallbackRegister').style.display='flex';">
-      <div id="logoFallbackRegister" class="w-16 h-16 bg-emerald-500 rounded-2xl items-center justify-center text-white font-black text-3xl mx-auto shadow-lg shadow-emerald-500/30 mb-3" style="display:none;">J</div>
+      <img src="logo-jagopos.png" alt="JagoPOS" class="w-16 h-16 mx-auto mb-3 object-contain" onerror="this.style.display='none'; document.getElementById('logoFallbackRegister').style.display='flex'">
+      <div id="logoFallbackRegister" class="w-16 h-16 bg-emerald-500 rounded-2xl items-center justify-center text-white font-black text-3xl mx-auto shadow-lg shadow-emerald-500/30 mb-3" style="display:none">J</div>
       <h1 class="text-xl font-black text-slate-800">Daftar Toko</h1>
       <p class="text-xs text-slate-400">Cloud database otomatis</p>
     </div>
@@ -101,20 +98,17 @@
       <input id="regNamaToko" type="text" placeholder="Nama Toko" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-none text-sm">
       <input id="regEmail" type="email" placeholder="Email Admin" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-none text-sm">
       <input id="regUsername" type="text" placeholder="Username" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-none text-sm">
-      
       <div class="relative">
         <i class="fa-solid fa-lock absolute left-4 top-3.5 text-slate-400"></i>
         <input id="regPassword" type="password" placeholder="Password" class="w-full pl-11 pr-12 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-none text-sm">
         <button onclick="togglePasswordVisibility('regPassword', this)" type="button" class="absolute right-3 top-3 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-eye"></i></button>
       </div>
-
       <div class="relative">
         <i class="fa-solid fa-lock absolute left-4 top-3.5 text-slate-400"></i>
         <input id="regConfirmPassword" type="password" placeholder="Konfirmasi Password" class="w-full pl-11 pr-12 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-none text-sm">
         <button onclick="togglePasswordVisibility('regConfirmPassword', this)" type="button" class="absolute right-3 top-3 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-eye"></i></button>
       </div>
       <small id="regPasswordMatch" class="text-xs hidden"></small>
-
       <button onclick="prosesDaftar()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95">BUAT AKUN</button>
     </div>
     <div class="text-center mt-6">
@@ -126,8 +120,8 @@
 <!-- MODAL LUPA PASSWORD -->
 <div id="modalLupaPassword" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[9999] hidden items-center justify-center">
   <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full">
-    <img src="favicon-jagopos.png" alt="JagoPOS" class="w-12 h-12 mx-auto mb-4 object-contain" onerror="this.style.display='none'; document.getElementById('logoFallbackModal').style.display='flex';">
-    <div id="logoFallbackModal" class="w-12 h-12 bg-blue-600 rounded-xl items-center justify-center text-white font-black text-2xl mx-auto mb-4" style="display:none;">J</div>
+    <img src="favicon-jagopos.png" alt="JagoPOS" class="w-12 h-12 mx-auto mb-4 object-contain" onerror="this.style.display='none'; document.getElementById('logoFallbackModal').style.display='flex'">
+    <div id="logoFallbackModal" class="w-12 h-12 bg-blue-600 rounded-xl items-center justify-center text-white font-black text-2xl mx-auto mb-4" style="display:none">J</div>
     <h2 class="text-xl font-black text-slate-800 text-center mb-4">🔐 Lupa Password</h2>
     <p class="text-xs text-slate-500 text-center mb-4">Masukkan email terdaftar, kami kirimkan password Anda.</p>
     <input id="inputLupaEmail" type="email" placeholder="Email Terdaftar" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-600 outline-none text-sm mb-4">
@@ -141,9 +135,8 @@
 <!-- ============================================================= -->
 <div id="sidebarUI" class="fixed left-0 top-0 h-full w-20 bg-slate-900 flex flex-col items-center py-6 justify-between border-r border-slate-800 z-50 hidden">
   <div class="flex flex-col items-center space-y-6 w-full">
-    <img src="logo-jagopos.png" alt="JagoPOS" class="w-12 h-12 rounded-xl shadow-lg shadow-blue-500/30 object-contain bg-white/5 p-1" onerror="this.style.display='none'; document.getElementById('logoFallbackSidebar').style.display='flex';">
-    <div id="logoFallbackSidebar" class="w-12 h-12 bg-blue-600 rounded-xl items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/30" style="display:none;">J</div>
-    
+    <img src="logo-jagopos.png" alt="JagoPOS" class="w-12 h-12 rounded-xl shadow-lg shadow-blue-500/30 object-contain bg-white/5 p-1" onerror="this.style.display='none'; document.getElementById('logoFallbackSidebar').style.display='flex'">
+    <div id="logoFallbackSidebar" class="w-12 h-12 bg-blue-600 rounded-xl items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/30" style="display:none">J</div>
     <nav class="flex flex-col space-y-2 w-full px-2">
       <button onclick="bukaHalaman('pageKasir')" id="nav-pageKasir" class="sidebar-btn active w-full p-3.5 rounded-xl flex flex-col items-center justify-center gap-1 text-white bg-blue-600"><i class="fa-solid fa-cash-register text-lg"></i><span class="text-[9px] font-medium">Kasir</span></button>
       <button onclick="bukaHalaman('pageDashboard'); muatDashboard();" id="nav-pageDashboard" class="sidebar-btn admin-only w-full p-3.5 rounded-xl flex flex-col items-center justify-center gap-1 text-slate-400 hover:bg-slate-800 hover:text-white"><i class="fa-solid fa-chart-pie text-lg"></i><span class="text-[9px] font-medium">Analitik</span></button>
@@ -162,11 +155,10 @@
 <!-- ============================================================= -->
 <div id="mainContent" class="flex-1 h-screen overflow-hidden bg-[#f1f5f9] hidden flex-col" style="margin-left: 80px;">
 
-  <!-- HEADER -->
   <div class="bg-white h-14 border-b border-slate-200 flex justify-between items-center px-6 shadow-sm shrink-0 z-20">
     <div class="flex items-center gap-3">
-      <img src="favicon-jagopos.png" alt="JagoPOS" class="w-8 h-8 object-contain" onerror="this.style.display='none'; document.getElementById('logoFallbackHeader').style.display='flex';">
-      <div id="logoFallbackHeader" class="w-8 h-8 bg-blue-600 rounded-lg items-center justify-center text-white font-black text-sm" style="display:none;">J</div>
+      <img src="favicon-jagopos.png" alt="JagoPOS" class="w-8 h-8 object-contain" onerror="this.style.display='none'; document.getElementById('logoFallbackHeader').style.display='flex'">
+      <div id="logoFallbackHeader" class="w-8 h-8 bg-blue-600 rounded-lg items-center justify-center text-white font-black text-sm" style="display:none">J</div>
       <span class="text-sm font-bold text-slate-800" id="labelTokoHeader">Toko Anda</span>
       <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-black"><i class="fa-solid fa-cloud-arrow-up mr-1"></i> SYNC</span>
     </div>
@@ -179,10 +171,9 @@
     </div>
   </div>
 
-  <!-- WRAPPER HALAMAN -->
   <div class="flex-1 overflow-hidden relative">
 
-    <!-- ===== PAGE 1: KASIR (DENGAN MODIFIERS & HOLD BILL) ===== -->
+    <!-- ===== PAGE 1: KASIR ===== -->
     <div id="pageKasir" class="absolute inset-0 flex pos-layout bg-slate-100 page-section">
       <div class="pos-katalog w-2/3 flex flex-col h-full p-6">
         <div class="relative mb-5 shadow-sm">
@@ -276,7 +267,7 @@
     <!-- ===== PAGE 3: INVENTORY ===== -->
     <div id="pageInventory" class="absolute inset-0 p-6 overflow-y-auto page-section hidden">
       <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-        <h2 class="text-lg font-black text-slate-800 mb-6"><i class="fa-solid fa-box text-blue-600 mr-2"></i> Stok Barang & Inventory</h2>
+        <h2 class="text-lg font-black text-slate-800 mb-6"><i class="fa-solid fa-box text-blue-600 mr-2"></i> Stok Barang</h2>
         <div id="statusLoadingStok" class="text-center py-10 text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Memuat...</div>
         <div id="listInventory" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
       </div>
@@ -315,7 +306,7 @@
 </div>
 
 <!-- ============================================================= -->
-<!-- MODAL MODIFIERS (VARIAN PRODUK)                               -->
+<!-- MODAL MODIFIERS                                               -->
 <!-- ============================================================= -->
 <div id="modalModifier" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[1100] hidden items-center justify-center fade-in">
   <div class="bg-white rounded-3xl w-[380px] shadow-2xl flex flex-col overflow-hidden">
@@ -423,8 +414,10 @@
 <!-- JAVASCRIPT ENGINE                                             -->
 <!-- ============================================================= -->
 <script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbyWZvWv1DTxILqNYCVVcyaA-DHSVuIsStpqd20KLly2Tc0ZnSEFie8XlU3lnzvKQicP/exec";
+  // ===== KONFIGURASI =====
+  const API_URL = "https://script.google.com/macros/s/AKfycbwS0bX3tZO3agc9ZgtgYaONfNC5_2cQ3aYZlbE8RZ2IhQ5x_LbQbPZW1uER6h3Rz2-5/exec";
 
+  // ===== HELPERS =====
   function showLoading(show, text) {
     const loader = document.getElementById('globalLoader');
     if (show) { document.getElementById('loaderText').innerText = text || 'Memproses...'; loader.classList.remove('hidden'); loader.classList.add('flex'); }
@@ -444,6 +437,7 @@
   function safeSetText(id, txt) { const el = document.getElementById(id); if (el) el.innerText = txt; }
   function safeSetHTML(id, html) { const el = document.getElementById(id); if (el) el.innerHTML = html; }
 
+  // ===== API =====
   function callAPI(action, data = {}, sheetId = null) {
     return new Promise((resolve, reject) => {
       fetch(API_URL, {
@@ -457,6 +451,7 @@
     });
   }
 
+  // ===== TOGGLE PASSWORD =====
   function togglePasswordVisibility(inputId, btn) {
     var input = document.getElementById(inputId);
     var icon = btn.querySelector('i');
@@ -464,17 +459,16 @@
     else { input.type = 'password'; icon.className = 'fa-solid fa-eye'; }
   }
 
+  // ===== LUPA PASSWORD =====
   function bukaModalLupaPassword() {
     document.getElementById('modalLupaPassword').classList.remove('hidden');
     document.getElementById('modalLupaPassword').classList.add('flex');
   }
-
   function tutupModalLupaPassword() {
     document.getElementById('modalLupaPassword').classList.add('hidden');
     document.getElementById('modalLupaPassword').classList.remove('flex');
     document.getElementById('inputLupaEmail').value = '';
   }
-
   async function prosesLupaPassword() {
     var email = document.getElementById('inputLupaEmail').value;
     if (!email || !email.includes('@')) { showToast("Masukkan email valid!", "error"); return; }
@@ -487,6 +481,7 @@
     } catch(e) { showLoading(false); showToast(e.message, "error"); }
   }
 
+  // ===== AUTH =====
   window.onload = function() {
     const saved = localStorage.getItem("jagopos_data");
     if (saved) { try { sessionUser = JSON.parse(saved); tampilkanMainApp(); } catch(e) { toggleAuth('login'); } }
@@ -520,12 +515,10 @@
     const u = document.getElementById('regUsername').value;
     const p = document.getElementById('regPassword').value;
     const c = document.getElementById('regConfirmPassword').value;
-
     if (!n || !e || !u || !p || !c) return showToast("Lengkapi semua form!", "error");
     if (p !== c) return showToast("Password tidak cocok!", "error");
     if (!e.includes('@')) return showToast("Email tidak valid!", "error");
     if (p.length < 6) return showToast("Password minimal 6 karakter!", "error");
-
     showLoading(true, "Membuat database...");
     try {
       const res = await callAPI('registerTokoBaru', { namaToko: n, email: e, username: u, password: p });
@@ -578,7 +571,7 @@
     if (active) { active.classList.add('active', 'bg-blue-600', 'text-white'); active.classList.remove('text-slate-400'); }
   }
 
-  // ===== KASIR & ENTERPRISE FEATURES =====
+  // ===== KASIR =====
   let keranjang = [];
   let cacheProduk = [];
   let totalTagihanGlobal = 0;
@@ -638,7 +631,7 @@
     renderGridProduk(hasil);
   }
 
-  // ===== MODIFIERS SYSTEM =====
+  // ===== MODIFIERS =====
   function bukaModalModifier(id) {
     const p = cacheProduk.find(x => x.id === id);
     if(!p) return;
@@ -679,7 +672,6 @@
     let finalPrice = hargaDasar + extraPrice;
     let modText = modifiers.map(m => m.name).join(", ");
     let cartKey = produk.id + "-" + modText;
-
     const idx = keranjang.findIndex(x => x.cartKey === cartKey);
     if (idx > -1) {
       if (keranjang[idx].qty < produk.stok) keranjang[idx].qty++;
@@ -746,18 +738,16 @@
     else btn.innerHTML = `<span>Belum Ada Pesanan</span><i class="fa-solid fa-arrow-right"></i>`;
   }
 
-  // ===== HOLD BILL SYSTEM =====
+  // ===== HOLD BILL =====
   function bukaModalHoldBill() {
     renderListHoldBill();
     document.getElementById('modalHoldBill').classList.remove('hidden');
     document.getElementById('modalHoldBill').classList.add('flex');
   }
-
   function tutupModalHoldBill() {
     document.getElementById('modalHoldBill').classList.add('hidden');
     document.getElementById('modalHoldBill').classList.remove('flex');
   }
-
   function simpanBillKeHold() {
     if(keranjang.length === 0) { showToast("Keranjang kosong!", "error"); return; }
     let custName = document.getElementById('namaCustomerBill').value || "Pelanggan " + (savedHoldBills.length + 1);
@@ -767,7 +757,6 @@
     showToast(`Tagihan ${custName} di-hold!`, "success");
     renderListHoldBill();
   }
-
   function renderListHoldBill() {
     if(savedHoldBills.length === 0) {
       safeSetHTML('listHoldBills', '<p class="text-xs text-slate-400 text-center py-4">Tidak ada antrean.</p>');
@@ -783,7 +772,6 @@
       </div>`).join('');
     safeSetHTML('listHoldBills', html);
   }
-
   function recallBill(index) {
     if(keranjang.length > 0 && !confirm("Timpa keranjang saat ini?")) return;
     let billToRecall = savedHoldBills[index];
@@ -804,7 +792,6 @@
     document.getElementById('modalPembayaran').classList.add('flex');
     pilihMetodeBayar('Tunai');
   }
-
   function tutupModalPembayaran() {
     document.getElementById('modalPembayaran').classList.add('hidden');
     document.getElementById('modalPembayaran').classList.remove('flex');
@@ -845,7 +832,7 @@
     showLoading(true, "Menyimpan transaksi...");
     try {
       const res = await callAPI('prosesCheckout', {
-        keranjang: keranjang.map(i => ({ id: i.id, nama: i.nama, qty: i.qty, hargaPilihan: i.harga, modifierText: i.modifierText || "" })),
+        keranjang: keranjang.map(i => ({ id: i.id, nama: i.nama, qty: i.qty, harga: i.harga, modifierText: i.modifierText || "" })),
         metodeBayar: metode,
         kasir: sessionUser.nama,
         gudang: document.getElementById('pilihGudang').value,
@@ -882,7 +869,7 @@
     window.print();
   }
 
-  // ===== DASHBOARD, INVENTORY, LAPORAN, SETTING =====
+  // ===== DASHBOARD =====
   async function muatDashboard() {
     try {
       const res = await callAPI('getDashboardStats', {}, sessionUser.sheetId);
@@ -902,6 +889,7 @@
     } catch(e) { showToast("Gagal muat dashboard", "error"); }
   }
 
+  // ===== INVENTORY =====
   async function muatInventory() {
     document.getElementById('statusLoadingStok').classList.remove('hidden');
     try {
@@ -916,6 +904,7 @@
     } catch(e) { showToast("Gagal muat stok", "error"); document.getElementById('statusLoadingStok').classList.add('hidden'); }
   }
 
+  // ===== LAPORAN =====
   async function muatLaporan() {
     const start = document.getElementById('startDate').value || new Date().toISOString().split('T')[0];
     const end = document.getElementById('endDate').value || new Date().toISOString().split('T')[0];
@@ -948,6 +937,7 @@
     } catch(e) { showToast("Gagal export", "error"); }
   }
 
+  // ===== SETTING =====
   async function muatSetting() {
     try {
       const res = await callAPI('getSettings', {}, sessionUser.sheetId);
@@ -965,6 +955,7 @@
     } catch(e) { showToast("Gagal simpan", "error"); }
   }
 
+  // ===== INISIALISASI =====
   renderKeranjang();
 </script>
 </body>
