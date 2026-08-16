@@ -1,17 +1,26 @@
-// apps_script/complete_gas.js
 /*
-  Full Apps Script (improved) - UPDATED for Reserve-only flow and global Manager PIN
-  Paste into your Apps Script project (Code.gs). Ensure you set Script Properties:
-    MASTER_DB_ID, TEMPLATE_ID, JAGO_API_KEY (optional), MANAGER_PIN (global manager PIN, plain or hashed as you prefer)
+  Updated Code.gs (apps_script/complete_gas.js)
+  - Adds getDataInventory and getDashboardStats endpoints for frontend
+  - Keeps all previous functionality (registerTokoBaru, cekLoginTenant, prosesCheckout, reservations, paymentWebhook, shifts, audit)
+  Paste this into Apps Script (replace existing Code.gs) and Deploy.
 */
 
-// CONFIG via Script Properties
-var MASTER_DB_ID = PropertiesService.getScriptProperties().getProperty('MASTER_DB_ID') || '';
-var TEMPLATE_ID = PropertiesService.getScriptProperties().getProperty('TEMPLATE_ID') || '';
-var JAGO_API_KEY = PropertiesService.getScriptProperties().getProperty('JAGO_API_KEY') || '';
-var MANAGER_PIN = PropertiesService.getScriptProperties().getProperty('MANAGER_PIN') || '';
+function installConfig(){
+  var props = PropertiesService.getScriptProperties();
+  props.setProperties({
+    MASTER_DB_ID: '',
+    TEMPLATE_ID: 'YOUR_TEMPLATE_SPREADSHEET_ID_HERE',
+    JAGO_API_KEY: ''
+  }, true);
+  Logger.log('Config installed.');
+}
+
+var MASTER_DB_ID = function(){ return PropertiesService.getScriptProperties().getProperty('MASTER_DB_ID') || ''; };
+var TEMPLATE_ID = function(){ return PropertiesService.getScriptProperties().getProperty('TEMPLATE_ID') || ''; };
+var JAGO_API_KEY = function(){ return PropertiesService.getScriptProperties().getProperty('JAGO_API_KEY') || ''; };
 
 function jsonResponse(obj){ return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON); }
+function doGet(e){ return ContentService.createTextOutput('JagoPOS GAS: OK').setMimeType(ContentService.MimeType.TEXT); }
 
 function doPost(e){
   try{
@@ -22,243 +31,63 @@ function doPost(e){
     var sheetId = params.sheetId || null;
     var data = params.data || {};
 
-    // rate-limit per sheetId
-    var rl = checkRateLimit(sheetId || 'global');
-    if (!rl.ok) return jsonResponse({ status:'error', pesan: rl.pesan });
-
-    // simple api_key check if set
-    if (JAGO_API_KEY) {
-      var key = (data && data.api_key) || params.api_key || null;
-      if (!key || key !== JAGO_API_KEY) return jsonResponse({ status:'error', pesan:'Unauthorized' });
-    }
+    var rl = checkRateLimit(sheetId || 'global'); if (!rl.ok) return jsonResponse({ status:'error', pesan: rl.pesan });
+    var configuredKey = JAGO_API_KEY();
+    if (configuredKey) { var key = (data && data.api_key) || params.api_key || null; if (!key || key !== configuredKey) return jsonResponse({ status:'error', pesan:'Unauthorized' }); }
 
     switch(action){
+      case 'registerTokoBaru': return jsonResponse(registerTokoBaru(data));
+      case 'cekLoginTenant': return jsonResponse(cekLoginTenant(sheetId, data.username, data.password));
+      case 'verifyManagerPinTenant': return jsonResponse(verifyManagerPinTenant(sheetId, data.pin));
       case 'prosesCheckout': return jsonResponse(prosesCheckout(sheetId, data));
       case 'bulkSync': return jsonResponse(processBulkSync(sheetId, data.items||[]));
       case 'openShift': return jsonResponse(openShift(sheetId, data));
       case 'closeShift': return jsonResponse(closeShift(sheetId, data));
       case 'paymentWebhook': return jsonResponse(handlePaymentWebhook(sheetId, data));
-      case 'verifyManagerPin': return jsonResponse(verifyManagerPin(data.pin));
-      // add other actions mapping to functions as needed
+      case 'getDataInventory': return jsonResponse(getDataInventory(sheetId));
+      case 'getDashboardStats': return jsonResponse(getDashboardStats(sheetId));
       default: return jsonResponse({ status:'error', pesan:'Unknown action '+action });
     }
-  }catch(err){ return jsonResponse({ status:'error', pesan: err.toString() }); }
+  } catch(err){ return jsonResponse({ status:'error', pesan: err.toString() }); }
 }
 
-// Rate limiter using CacheService: allow X requests per minute per key
-function checkRateLimit(key){
-  try{
-    var cache = CacheService.getScriptCache();
-    var cacheKey = 'rl_' + key;
-    var raw = cache.get(cacheKey);
-    var limit = 120; // requests per minute (tuned higher for POS)
-    if (!raw){ cache.put(cacheKey, '1', 60); return { ok:true }; }
-    var count = parseInt(raw,10) || 0;
-    if (count > limit) return { ok:false, pesan:'Rate limit exceeded' };
-    cache.put(cacheKey, String(count+1), 60);
-    return { ok:true };
-  }catch(e){ return { ok:true }; }
-}
+/* Utilities */
+function checkRateLimit(key){ try{ var cache = CacheService.getScriptCache(); var cacheKey = 'rl_' + key; var raw = cache.get(cacheKey); var limit = 120; if (!raw){ cache.put(cacheKey, '1', 60); return { ok:true }; } var count = parseInt(raw,10) || 0; if (count > limit) return { ok:false, pesan:'Rate limit exceeded' }; cache.put(cacheKey, String(count+1), 60); return { ok:true }; }catch(e){ return { ok:true }; } }
+function audit(sheetId, userId, action, meta){ try{ var ss = SpreadsheetApp.openById(sheetId); var sh = ss.getSheetByName('Audit_Logs'); if(!sh) sh = ss.insertSheet('Audit_Logs'); sh.appendRow([ 'AUD-' + new Date().getTime().toString().slice(-6), new Date(), userId||'', action, JSON.stringify(meta||{}) ]); }catch(e){} }
+function ensureSheet(ss, name){ var sh = ss.getSheetByName(name); if (!sh) sh = ss.insertSheet(name); return sh; }
+function hashValue(v){ var raw = Utilities.newBlob(String(v)).getBytes(); var digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, raw); return digest.map(function(b){ var s = (b < 0 ? b + 256 : b).toString(16); return s.length==1 ? '0'+s : s; }).join(''); }
 
-// Audit log helper
-function audit(sheetId, userId, action, meta){
-  try{
-    var ss = SpreadsheetApp.openById(sheetId);
-    var sh = ss.getSheetByName('Audit_Logs'); if(!sh) sh = ss.insertSheet('Audit_Logs');
-    sh.appendRow([ 'AUD-' + new Date().getTime().toString().slice(-6), new Date(), userId||'', action, JSON.stringify(meta||{}) ]);
-  }catch(e){ /* ignore */ }
-}
+/* Tenant registration */
+function registerTokoBaru(data){ try{ var templateId = TEMPLATE_ID(); if (!templateId) return { status:'error', pesan:'TEMPLATE_ID belum dikonfigurasi' }; var namaToko = data.namaToko || ('Toko ' + new Date().toISOString()); var usernameAdmin = data.username || 'admin'; var passwordAdmin = data.password || Math.random().toString(36).slice(2,10); var email = data.email || ''; var managerPin = data.managerPin || null; var fileTemplate = DriveApp.getFileById(templateId); var copyName = 'DB_' + namaToko + ' - JagoPOS'; var newFile = fileTemplate.makeCopy(copyName); var newSheetId = newFile.getId(); var ss = SpreadsheetApp.openById(newSheetId); var sheetUsers = ensureSheet(ss, 'Data_Pengguna'); var headerU = sheetUsers.getRange(1,1,1,6).getValues()[0]; if (!headerU || headerU[0] !== 'ID') { sheetUsers.clear(); sheetUsers.appendRow(['ID','Username','PasswordHash','Role','Status','CreatedAt']); } var userId = 'U-' + new Date().getTime().toString().slice(-6); var pwdHash = hashValue(passwordAdmin); sheetUsers.appendRow([userId, usernameAdmin, pwdHash, 'Admin', 'Aktif', new Date()]); var shSet = ensureSheet(ss, 'Settings'); shSet.clear(); shSet.appendRow(['Key','Value']); shSet.appendRow(['store_name', namaToko]); shSet.appendRow(['owner_email', email]); shSet.appendRow(['created_at', new Date().toISOString()]); if (managerPin) { shSet.appendRow(['manager_pin_hash', hashValue(managerPin)]); } var needSheets = ['Master_Produk','Master_Stok','Reservations','Payment_Requests','Log_Transaksi','Log_Mutasi','Audit_Logs','Shifts']; needSheets.forEach(function(n){ ensureSheet(ss, n); }); var masterId = MASTER_DB_ID(); if (masterId) { try{ var master = SpreadsheetApp.openById(masterId).getSheetByName('Data_Toko'); if(!master) master = SpreadsheetApp.openById(masterId).insertSheet('Data_Toko'); var headerM = master.getRange(1,1,1,6).getValues()[0]; if (!headerM || headerM[0] !== 'ID_Toko') master.clear(), master.appendRow(['ID_Toko','Nama_Toko','Username','SheetID','Email','CreatedAt']); master.appendRow([ 'T-' + new Date().getTime().toString().slice(-6), namaToko, usernameAdmin, newSheetId, email, new Date() ]); }catch(e){} } audit(newSheetId, usernameAdmin, 'registerTokoBaru', { created:true, sheetId:newSheetId }); return { status:'sukses', pesan:'Toko dibuat', sheetId: newSheetId, admin: usernameAdmin, password: passwordAdmin }; }catch(e){ return { status:'error', pesan: e.toString() }; } }
 
-// Shifts: open/close
-function openShift(sheetId, data){
-  try{
-    var ss = SpreadsheetApp.openById(sheetId);
-    var sh = ss.getSheetByName('Shifts'); if(!sh) sh = ss.insertSheet('Shifts');
-    var id = 'S-' + new Date().getTime().toString().slice(-6);
-    var user = data.user || 'unknown';
-    var starting = Number(data.starting_cash) || 0;
-    sh.appendRow([id, new Date(), '', user, starting, '', 'OPEN']);
-    audit(sheetId, user, 'openShift', { shiftId:id, starting:starting });
-    return { status:'ok', shiftId:id };
-  }catch(e){ return { status:'error', pesan:e.toString() }; }
-}
+/* Tenant-scoped manager PIN check */
+function verifyManagerPinTenant(sheetId, pin){ try{ if (!sheetId) return { status:'error', pesan:'sheetId dibutuhkan' }; var ss = SpreadsheetApp.openById(sheetId); var sh = ss.getSheetByName('Settings'); if (!sh) return { status:'error', pesan:'Settings sheet tidak ditemukan' }; var rows = sh.getDataRange().getValues(); var kv = {}; for (var i=1; i<rows.length; i++){ if(rows[i] && rows[i].length >= 2) kv[String(rows[i][0]).trim()] = String(rows[i][1]||'').trim(); } var storedHash = kv['manager_pin_hash'] || ''; if (!storedHash) return { status:'error', pesan:'Manager PIN belum diatur untuk toko ini' }; var inputHash = hashValue(pin); if (inputHash === storedHash) return { status:'ok' }; else return { status:'error', pesan:'PIN salah' }; }catch(e){ return { status:'error', pesan: e.toString() }; } }
 
-function closeShift(sheetId, data){
-  try{
-    var ss = SpreadsheetApp.openById(sheetId);
-    var sh = ss.getSheetByName('Shifts'); if(!sh) return { status:'error', pesan:'No shifts sheet' };
-    var rows = sh.getDataRange().getValues();
-    // find last open shift
-    var lastIndex = -1; for(var i=rows.length-1;i>=1;i--){ if(rows[i][6] === 'OPEN'){ lastIndex = i; break; } }
-    if (lastIndex === -1) return { status:'error', pesan:'No open shift' };
-    var expected = Number(rows[lastIndex][4]||0);
-    var actual = Number(data.actual_cash) || 0;
-    var diff = actual - expected;
-    sh.getRange(lastIndex+1, 3).setValue(new Date()); // closed_at col index 3
-    sh.getRange(lastIndex+1, 6).setValue(actual);
-    sh.getRange(lastIndex+1, 7).setValue('CLOSED');
-    audit(sheetId, data.user || '', 'closeShift', { expected:expected, actual:actual, diff:diff });
-    if (diff !== 0){
-      // lock user in Data_Pengguna - set status LOCKED
-      try{
-        var shUser = ss.getSheetByName('Data_Pengguna'); if(shUser){ var urows = shUser.getDataRange().getValues(); for(var j=1;j<urows.length;j++){ if(urows[j][1] === (data.user||'')){ shUser.getRange(j+1,5).setValue('LOCKED'); } } }
-      }catch(e){}
-    }
-    return { status:'ok', diff:diff };
-  }catch(e){ return { status:'error', pesan: e.toString() }; }
-}
+/* Shifts */
+function openShift(sheetId, data){ try{ var ss = SpreadsheetApp.openById(sheetId); var sh = ss.getSheetByName('Shifts'); if(!sh) sh = ss.insertSheet('Shifts'); var id = 'S-' + new Date().getTime().toString().slice(-6); var user = data.user || 'unknown'; var starting = Number(data.starting_cash) || 0; sh.appendRow([id, new Date(), '', user, starting, '', 'OPEN']); audit(sheetId, user, 'openShift', { shiftId:id, starting:starting }); return { status:'ok', shiftId:id }; }catch(e){ return { status:'error', pesan:e.toString() }; } }
+function closeShift(sheetId, data){ try{ var ss = SpreadsheetApp.openById(sheetId); var sh = ss.getSheetByName('Shifts'); if(!sh) return { status:'error', pesan:'No shifts sheet' }; var rows = sh.getDataRange().getValues(); var lastIndex = -1; for(var i=rows.length-1;i>=1;i--){ if(rows[i][6] === 'OPEN'){ lastIndex = i; break; } } if (lastIndex === -1) return { status:'error', pesan:'No open shift' }; var expected = Number(rows[lastIndex][4]||0); var actual = Number(data.actual_cash) || 0; var diff = actual - expected; sh.getRange(lastIndex+1, 3).setValue(new Date()); sh.getRange(lastIndex+1, 6).setValue(actual); sh.getRange(lastIndex+1, 7).setValue('CLOSED'); audit(sheetId, data.user || '', 'closeShift', { expected:expected, actual:actual, diff:diff }); if (diff !== 0){ try{ var shUser = ss.getSheetByName('Data_Pengguna'); if (shUser){ var urows = shUser.getDataRange().getValues(); for(var j=1;j<urows.length;j++){ if(urows[j][1] === (data.user||'')){ shUser.getRange(j+1,5).setValue('LOCKED'); } } } }catch(e){} } return { status:'ok', diff:diff }; }catch(e){ return { status:'error', pesan: e.toString() }; } }
 
-// verifyManagerPin - compares provided pin to MANAGER_PIN Script Property
-function verifyManagerPin(pin){
-  try{
-    if (!MANAGER_PIN) return { status:'error', pesan:'Manager PIN not configured' };
-    if (!pin) return { status:'error', pesan:'PIN kosong' };
-    if (String(pin) === String(MANAGER_PIN)) return { status:'ok' }; else return { status:'error', pesan:'PIN salah' };
-  }catch(e){ return { status:'error', pesan:e.toString() }; }
-}
+/* Payment webhook handling & reservations finalize */
+function handlePaymentWebhook(sheetId, data){ try{ var ss = SpreadsheetApp.openById(sheetId); var sh = ss.getSheetByName('Payment_Requests'); if(!sh) sh = ss.insertSheet('Payment_Requests'); var payments = sh.getDataRange().getValues(); for(var i=1;i<payments.length;i++){ if(payments[i][0] === data.payment_reference){ sh.getRange(i+1,4).setValue(data.status); sh.getRange(i+1,6).setValue(new Date()); audit(sheetId,'SYSTEM','paymentWebhook',{ref:data.payment_reference,status:data.status}); var resSh = ss.getSheetByName('Reservations'); if(resSh){ var rows = resSh.getDataRange().getValues(); for(var r=1;r<rows.length;r++){ if(rows[r][1] === data.payment_reference){ var resStatus = String(data.status).toUpperCase(); if(resStatus === 'PAID'){ var items = JSON.parse(rows[r][6] || '[]'); var gudang = rows[r][4] || 'Gudang Utama'; var kasir = rows[r][7] || 'Kasir'; var reservationId = rows[r][0]; var lock = LockService.getScriptLock(); lock.tryLock(10000); try{ var stokSh = ss.getSheetByName('Master_Stok'); if(!stokSh) stokSh = ss.insertSheet('Master_Stok'); var stokArr = stokSh.getDataRange().getValues(); var stokMap = {}; for(var si=1; si<stokArr.length; si++){ stokMap[ stokArr[si][0] + '||' + stokArr[si][2] ] = { rowIndex: si+1, stok: Number(stokArr[si][3]||0) }; } var transSh = ss.getSheetByName('Log_Transaksi'); if(!transSh) transSh = ss.insertSheet('Log_Transaksi'); var mutSh = ss.getSheetByName('Log_Mutasi'); if(!mutSh) mutSh = ss.insertSheet('Log_Mutasi'); var allOk = true; var insufficient = []; for(var it=0; it<items.length; it++){ var itObj = items[it]; var key = itObj.id + '||' + gudang; if(!stokMap[key] || stokMap[key].stok < Number(itObj.qty)) { allOk = false; insufficient.push(itObj); } } if(!allOk){ resSh.getRange(r+1,5).setValue('REVIEW_NEEDED'); audit(sheetId,'SYSTEM','reservation_review_needed',{reservation:reservationId,insufficient:insufficient}); lock.releaseLock(); return { status:'conflict', pesan:'Stok tidak cukup saat konfirmasi pembayaran. Review needed.' }; } var idTrans = rows[r][2] || ('JGP-' + new Date().getTime().toString().slice(-6)); for(var it2=0; it2<items.length; it2++){ var itObj = items[it2]; var key2 = itObj.id + '||' + gudang; var stokObj = stokMap[key2]; var newStok = stokObj.stok - Number(itObj.qty); stokSh.getRange(stokObj.rowIndex,4).setValue(newStok); stokObj.stok = newStok; var nameSnap = itObj.nama + (itObj.modifierText?(' ('+itObj.modifierText+')'): ''); transSh.appendRow([idTrans, new Date(), kasir, rows[r][3]||'Umum', gudang, itObj.id, nameSnap, Number(itObj.qty), Number(itObj.harga)||0, itObj.diskon||0, Number(itObj.qty)*Number(itObj.harga)||0, rows[r][8]||'NONCASH']); mutSh.appendRow(['MUT-'+new Date().getTime().toString().slice(-6), new Date(), 'KELUAR', itObj.id, Number(itObj.qty), 'Sale '+idTrans, kasir]); } resSh.getRange(r+1,5).setValue('COMPLETED'); audit(sheetId,'SYSTEM','reservation_completed',{reservation:reservationId, transaction:idTrans}); lock.releaseLock(); return { status:'ok', idTransaksi:idTrans }; }catch(err){ try{ lock.releaseLock(); }catch(e){} resSh.getRange(r+1,5).setValue('ERROR'); audit(sheetId,'SYSTEM','reservation_error',{err:err.toString()}); return { status:'error', pesan:err.toString() }; } } else if(resStatus === 'FAILED' || resStatus === 'CANCELLED'){ resSh.getRange(r+1,5).setValue('CANCELLED'); audit(sheetId,'SYSTEM','reservation_cancelled',{ref:data.payment_reference}); return { status:'ok', pesan:'Reservation cancelled' }; } else { resSh.getRange(r+1,5).setValue(resStatus); return { status:'ok' }; } } } } return { status:'ok' }; } } return { status:'error', pesan:'Payment reference not found' }; }catch(e){ return { status:'error', pesan:e.toString() }; } }
 
-// Payment webhook & reservation handling
-function handlePaymentWebhook(sheetId, data){
-  try{
-    var ss = SpreadsheetApp.openById(sheetId);
-    var sh = ss.getSheetByName('Payment_Requests'); if(!sh) sh = ss.insertSheet('Payment_Requests');
-    var payments = sh.getDataRange().getValues();
-    for(var i=1;i<payments.length;i++){
-      if(payments[i][0] === data.payment_reference){
-        sh.getRange(i+1,4).setValue(data.status);
-        sh.getRange(i+1,6).setValue(new Date());
-        audit(sheetId,'SYSTEM','paymentWebhook',{ref:data.payment_reference,status:data.status});
-        // find reservation entry and act accordingly
-        var resSh = ss.getSheetByName('Reservations');
-        if(resSh){
-          var rows = resSh.getDataRange().getValues();
-          for(var r=1;r<rows.length;r++){
-            if(rows[r][1] === data.payment_reference){
-              var resStatus = data.status.toUpperCase();
-              if(resStatus === 'PAID'){
-                // finalize reservation: deduct stock and create Log_Transaksi entries
-                var items = JSON.parse(rows[r][6] || '[]');
-                var gudang = rows[r][4] || 'Gudang Utama';
-                var kasir = rows[r][7] || 'Kasir';
-                var reservationId = rows[r][0];
-                var lock = LockService.getScriptLock(); lock.tryLock(10000);
-                try{
-                  var stokSh = ss.getSheetByName('Master_Stok'); if(!stokSh) stokSh = ss.insertSheet('Master_Stok');
-                  var stokArr = stokSh.getDataRange().getValues();
-                  // build map
-                  var stokMap = {};
-                  for(var si=1; si<stokArr.length; si++){ stokMap[ stokArr[si][0] + '||' + stokArr[si][2] ] = { rowIndex: si+1, stok: Number(stokArr[si][3]||0) }; }
-                  var transSh = ss.getSheetByName('Log_Transaksi'); if(!transSh) transSh = ss.insertSheet('Log_Transaksi');
-                  var mutSh = ss.getSheetByName('Log_Mutasi'); if(!mutSh) mutSh = ss.insertSheet('Log_Mutasi');
-                  var allOk = true; var insufficient = [];
-                  for(var it=0; it<items.length; it++){
-                    var itObj = items[it]; var key = itObj.id + '||' + gudang;
-                    if(!stokMap[key] || stokMap[key].stok < Number(itObj.qty)) { allOk = false; insufficient.push(itObj); }
-                  }
-                  if(!allOk){
-                    // mark reservation as REVIEW_NEEDED
-                    resSh.getRange(r+1,5).setValue('REVIEW_NEEDED');
-                    audit(sheetId,'SYSTEM','reservation_review_needed',{reservation:reservationId,insufficient:insufficient});
-                    lock.releaseLock();
-                    return { status:'conflict', pesan:'Stok tidak cukup saat konfirmasi pembayaran. Review needed.' };
-                  }
-                  // deduct and record
-                  var idTrans = rows[r][2] || ('JGP-' + new Date().getTime().toString().slice(-6));
-                  for(var it2=0; it2<items.length; it2++){
-                    var itObj = items[it2]; var key2 = itObj.id + '||' + gudang; var stokObj = stokMap[key2]; var newStok = stokObj.stok - Number(itObj.qty);
-                    stokSh.getRange(stokObj.rowIndex,4).setValue(newStok); stokObj.stok = newStok;
-                    var nameSnap = itObj.nama + (itObj.modifierText?(' ('+itObj.modifierText+')'):'');
-                    transSh.appendRow([idTrans, new Date(), kasir, rows[r][3]||'Umum', gudang, itObj.id, nameSnap, Number(itObj.qty), Number(itObj.harga)||0, itObj.diskon||0, Number(itObj.qty)*Number(itObj.harga)||0, rows[r][8]||'NONCASH']);
-                    mutSh.appendRow(['MUT-'+new Date().getTime().toString().slice(-6), new Date(), 'KELUAR', itObj.id, Number(itObj.qty), 'Sale '+idTrans, kasir]);
-                  }
-                  // mark reservation completed
-                  resSh.getRange(r+1,5).setValue('COMPLETED');
-                  audit(sheetId,'SYSTEM','reservation_completed',{reservation:reservationId, transaction:idTrans});
-                  lock.releaseLock();
-                  return { status:'ok', idTransaksi:idTrans };
-                }catch(err){ try{ lock.releaseLock(); }catch(e){} resSh.getRange(r+1,5).setValue('ERROR'); audit(sheetId,'SYSTEM','reservation_error',{err:err.toString()}); return { status:'error', pesan:err.toString() }; }
-              } else if(resStatus === 'FAILED' || resStatus === 'CANCELLED'){
-                resSh.getRange(r+1,5).setValue('CANCELLED');
-                audit(sheetId,'SYSTEM','reservation_cancelled',{ref:data.payment_reference});
-                return { status:'ok', pesan:'Reservation cancelled' };
-              } else {
-                resSh.getRange(r+1,5).setValue(resStatus);
-                return { status:'ok' };
-              }
-            }
-          }
-        }
-        return { status:'ok' };
-      }
-    }
-    return { status:'error', pesan:'Payment reference not found' };
-  }catch(e){ return { status:'error', pesan:e.toString() }; }
-}
+/* Bulk sync & checkout */
+function processBulkSync(sheetId, items){ var results = []; for(var i=0;i<items.length;i++){ try{ var res = prosesCheckout(sheetId, items[i]); if(res && (res.status==='sukses' || res.status==='pending')) results.push({ local_id: items[i].local_id || null, status:'processed', idTransaksi: res.idTransaksi || res.idTransaksi||null }); else results.push({ local_id: items[i].local_id||null, status:'conflict', pesan: res.pesan||'gagal' }); }catch(e){ results.push({ local_id: items[i].local_id||null, status:'error', pesan: e.toString() }); } } return { items: results }; }
 
-// processBulkSync & processCheckout
-function processBulkSync(sheetId, items){
-  var results = [];
-  for(var i=0;i<items.length;i++){
-    try{ var res = prosesCheckout(sheetId, items[i]); if(res && (res.status==='sukses' || res.status==='pending')) results.push({ local_id: items[i].local_id || null, status:'processed', idTransaksi: res.idTransaksi || res.idTransaksi||null }); else results.push({ local_id: items[i].local_id||null, status:'conflict', pesan: res.pesan||'gagal' }); }catch(e){ results.push({ local_id: items[i].local_id||null, status:'error', pesan: e.toString() }); }
-  }
-  return { items: results };
-}
+function prosesCheckout(sheetId, dataOrder){ var lock = LockService.getScriptLock(); if(!lock.tryLock(10000)) return { status:'gagal', pesan:'Sistem sibuk' }; try{ var ss = SpreadsheetApp.openById(sheetId); var sheetProduk = ensureSheet(ss,'Master_Produk'); var sheetStok = ensureSheet(ss,'Master_Stok'); var sheetTrans = ensureSheet(ss,'Log_Transaksi'); var sheetPayment = ensureSheet(ss,'Payment_Requests'); var resSh = ensureSheet(ss,'Reservations'); var header = resSh.getRange(1,1,1,9).getValues()[0]; if(!header || header[0] !== 'ReservationID'){ resSh.clear(); resSh.appendRow(['ReservationID','PaymentRef','TxId','Customer','Gudang','Status','ItemsJSON','Kasir','Metode']); } var idTrans = 'JGP-' + new Date().getTime().toString().slice(-6); var gudang = dataOrder.gudang || 'Gudang Utama'; var kasir = dataOrder.kasir || 'Kasir'; var metode = dataOrder.metodeBayar || 'Tunai'; var priceType = dataOrder.priceType || 'hargaUmum'; var prodArr = sheetProduk.getDataRange().getValues(); var stokArr = sheetStok.getDataRange().getValues(); var prodMap = {}; for(var p=1;p<prodArr.length;p++){ prodMap[prodArr[p][0]] = { nama: prodArr[p][2], hargaUmum: Number(prodArr[p][6]||0), hargaGrosir: Number(prodArr[p][7]||0), hargaMember: Number(prodArr[p][8]||0), is_weighted: prodArr[p][9] === true || prodArr[p][9] === 'TRUE' }; } var stokMap = {}; for(var s=1;s<stokArr.length;s++){ stokMap[ stokArr[s][0] + '||' + stokArr[s][2] ] = { rowIndex: s+1, stok: Number(stokArr[s][3]||0) }; } for(var i=0;i<(dataOrder.keranjang||[]).length;i++){ var it = dataOrder.keranjang[i]; if(!prodMap[it.id]){ lock.releaseLock(); return { status:'gagal', pesan:'Produk tidak ditemukan: '+it.id }; } if(metode === 'Tunai'){ var key = it.id + '||' + gudang; if(!stokMap[key] || stokMap[key].stok < Number(it.qty)){ lock.releaseLock(); return { status:'gagal', pesan:'Stok tidak cukup untuk '+it.id }; } } } var total = 0; var snapshotItems = []; for(var k=0;k<(dataOrder.keranjang||[]).length;k++){ var itx = dataOrder.keranjang[k]; var prod = prodMap[itx.id]; var unit = prod.hargaUmum; if(priceType==='hargaGrosir') unit = prod.hargaGrosir; if(priceType==='hargaMember') unit = prod.hargaMember; if(prod.is_weighted && itx.weightGram){ unit = (unit/1000) * Number(itx.weightGram); } var subtotal = unit * Number(itx.qty); total += subtotal; snapshotItems.push({ id: itx.id, nama: prod.nama, qty: itx.qty, harga: unit, modifierText: itx.modifierText || '' }); } if(metode !== 'Tunai'){ var payRef = 'PAY-' + new Date().getTime().toString().slice(-6); sheetPayment.appendRow([payRef, idTrans, metode, 'PENDING', total, new Date()]); resSh.appendRow(['RES-'+new Date().getTime().toString().slice(-6), payRef, idTrans, dataOrder.customer||'Umum', gudang, 'RESERVED', JSON.stringify(snapshotItems), kasir, metode]); audit(sheetId, kasir, 'checkout_reserved', { id: idTrans, payRef: payRef, total: total }); lock.releaseLock(); return { status:'pending', idTransaksi: idTrans, payment_reference: payRef, payment_url: 'https://mockpay.example/qr/' + payRef, total: total }; } for(var m=0;m<snapshotItems.length;m++){ var it = snapshotItems[m]; var key2 = it.id + '||' + gudang; var stokObj = stokMap[key2]; var newStok = stokObj.stok - Number(it.qty); sheetStok.getRange(stokObj.rowIndex,4).setValue(newStok); stokObj.stok = newStok; var nameSnap = it.nama + (it.modifierText?(' ('+it.modifierText+')'):''); sheetTrans.appendRow([idTrans, new Date(), kasir, dataOrder.customer||'Umum', gudang, it.id, nameSnap, Number(it.qty), it.harga, 0, Number(it.qty)*it.harga, metode]); var logMut = ensureSheet(ss,'Log_Mutasi'); logMut.appendRow(['MUT-'+new Date().getTime().toString().slice(-6), new Date(), 'KELUAR', it.id, Number(it.qty), 'Penjualan: '+idTrans, kasir]); } audit(sheetId, kasir, 'checkout', { id: idTrans, total: total }); lock.releaseLock(); return { status:'sukses', idTransaksi: idTrans, total: total }; }catch(e){ try{ lock.releaseLock(); }catch(ee){} return { status:'gagal', pesan:e.toString() }; } }
 
-function prosesCheckout(sheetId, dataOrder){
-  // Reserve-only: do not deduct stock for non-cash until webhook PAID
-  var lock = LockService.getScriptLock(); if(!lock.tryLock(10000)) return { status:'gagal', pesan:'Sistem sibuk' };
-  try{
-    var ss = SpreadsheetApp.openById(sheetId);
-    var sheetProduk = ensureSheet(ss,'Master_Produk'); var sheetStok = ensureSheet(ss,'Master_Stok'); var sheetTrans = ensureSheet(ss,'Log_Transaksi'); var sheetPayment = ensureSheet(ss,'Payment_Requests'); var resSh = ensureSheet(ss,'Reservations');
-    // ensure headers for Reservations (ID, payment_ref, txId, customer, gudang, status, items_json, kasir, metode)
-    var resHeader = resSh.getRange(1,1,1,9).getValues()[0]; if(!resHeader || resHeader[0] !== 'ReservationID'){ resSh.clear(); resSh.appendRow(['ReservationID','PaymentRef','TxId','Customer','Gudang','Status','ItemsJSON','Kasir','Metode']); }
+/* Login helper */
+function cekLoginTenant(sheetId, username, password){ try{ if(!sheetId) return { status:'error', pesan:'sheetId diperlukan' }; var ss = SpreadsheetApp.openById(sheetId); var sh = ss.getSheetByName('Data_Pengguna'); if(!sh) return { status:'error', pesan:'Data_Pengguna tidak ditemukan' }; var rows = sh.getDataRange().getValues(); for(var i=1;i<rows.length;i++){ var user = rows[i][1]; var passHash = rows[i][2]; var role = rows[i][3]; var status = rows[i][4]; if(String(user) === String(username) && status === 'Aktif'){ var inputHash = hashValue(password); if(String(inputHash) === String(passHash)){ return { status:'sukses', nama: user, role: role, sheetId: sheetId }; } else { return { status:'error', pesan:'Password salah' }; } } } return { status:'error', pesan:'User tidak ditemukan atau tidak aktif' }; }catch(e){ return { status:'error', pesan: e.toString() }; } }
 
-    var idTrans = 'JGP-' + new Date().getTime().toString().slice(-6);
-    var gudang = dataOrder.gudang || 'Gudang Utama'; var kasir = dataOrder.kasir || 'Kasir'; var metode = dataOrder.metodeBayar || 'Tunai'; var priceType = dataOrder.priceType || 'hargaUmum';
-    var prodArr = sheetProduk.getDataRange().getValues(); var stokArr = sheetStok.getDataRange().getValues(); var prodMap = {}; for(var p=1;p<prodArr.length;p++){ prodMap[prodArr[p][0]]={ nama:prodArr[p][2], hargaUmum:Number(prodArr[p][6]||0), hargaGrosir:Number(prodArr[p][7]||0), hargaMember:Number(prodArr[p][8]||0), is_weighted: prodArr[p][9]===true||prodArr[p][9]==='TRUE' }; }
-    var stokMap = {}; for(var s=1;s<stokArr.length;s++){ stokMap[ stokArr[s][0]+'||'+stokArr[s][2] ] = { rowIndex: s+1, stok: Number(stokArr[s][3]||0) }; }
+/* New: getDataInventory - returns product list merged with stock per gudang */
+function getDataInventory(sheetId){ try{ if(!sheetId) return { status:'error', pesan:'sheetId dibutuhkan' }; var ss = SpreadsheetApp.openById(sheetId); var shP = ss.getSheetByName('Master_Produk'); var shS = ss.getSheetByName('Master_Stok'); if(!shP) return { status:'ok', items: [] }; var pRows = shP.getDataRange().getValues(); var sRows = (shS?shS.getDataRange().getValues():[]); var products = []; // assume Master_Produk columns: [id, code?, name?, ... price fields at known indexes]
+    // Build product map from Master_Produk
+    for(var i=1;i<pRows.length;i++){ var r=pRows[i]; var id=r[0]; var nama=r[2]||r[1]||('Product '+id); var hargaUmum = Number(r[6]||0); var hargaGrosir = Number(r[7]||0); var hargaMember = Number(r[8]||0); var is_weighted = (r[9]===true || String(r[9]).toUpperCase()==='TRUE'); products.push({ id: id, nama: nama, hargaUmum: hargaUmum, hargaGrosir: hargaGrosir, hargaMember: hargaMember, is_weighted: is_weighted, stockByGudang: {} }); }
+    // Build stock map
+    var stockMap = {}; for(var j=1;j<sRows.length;j++){ var sr = sRows[j]; var pid = sr[0]; var gud = sr[2] || 'Gudang Utama'; var qty = Number(sr[3]||0); if(!stockMap[pid]) stockMap[pid]={}; stockMap[pid][gud]=qty; }
+    // Attach stock info
+    for(var k=0;k<products.length;k++){ var p = products[k]; p.stockByGudang = stockMap[p.id] || {}; }
+    return { status:'ok', items: products };
+  }catch(e){ return { status:'error', pesan: e.toString() }; } }
 
-    // Validate existence (don't reduce stok for non-cash)
-    for(var i=0;i<(dataOrder.keranjang||[]).length;i++){
-      var it = dataOrder.keranjang[i];
-      if(!prodMap[it.id]){ lock.releaseLock(); return { status:'gagal', pesan:'Produk tidak ditemukan: '+it.id }; }
-      if(metode === 'Tunai'){
-        var key = it.id+'||'+gudang; if(!stokMap[key] || stokMap[key].stok < Number(it.qty)){ lock.releaseLock(); return { status:'gagal', pesan:'Stok tidak cukup untuk '+it.id }; }
-      }
-    }
-
-    var total=0; var snapshotItems = [];
-    for(var i2=0;i2<(dataOrder.keranjang||[]).length;i2++){
-      var it = dataOrder.keranjang[i2]; var prod = prodMap[it.id]; var unit = prod.hargaUmum;
-      if(priceType==='hargaGrosir') unit=prod.hargaGrosir; if(priceType==='hargaMember') unit=prod.hargaMember;
-      if(prod.is_weighted && it.weightGram){ unit=(unit/1000)*Number(it.weightGram); }
-      var subtotal = unit * Number(it.qty); total += subtotal;
-      snapshotItems.push({ id: it.id, nama: prod.nama, qty: it.qty, harga: unit, modifierText: it.modifierText || '' });
-    }
-
-    if(metode !== 'Tunai'){
-      var payRef = 'PAY-' + new Date().getTime().toString().slice(-6);
-      sheetPayment.appendRow([payRef, idTrans, metode, 'PENDING', total, new Date()]);
-      resSh.appendRow(['RES-'+new Date().getTime().toString().slice(-6), payRef, idTrans, dataOrder.customer||'Umum', gudang, 'RESERVED', JSON.stringify(snapshotItems), kasir, metode]);
-      audit(sheetId, kasir, 'checkout_reserved', { id: idTrans, payRef: payRef, total: total });
-      lock.releaseLock();
-      return { status:'pending', idTransaksi:idTrans, payment_reference: payRef, payment_url: 'https://mockpay.example/qr/' + payRef, total: total };
-    }
-
-    // Tunai -> deduct immediately (existing flow)
-    for(var j=0;j<snapshotItems.length;j++){
-      var item = snapshotItems[j];
-      var key2 = item.id + '||' + gudang; var stokObj = stokMap[key2]; var newStok = stokObj.stok - Number(item.qty);
-      sheetStok.getRange(stokObj.rowIndex,4).setValue(newStok); stokObj.stok=newStok;
-      var nameSnap = item.nama + (item.modifierText?(' ('+item.modifierText+')'):'');
-      sheetTrans.appendRow([idTrans, new Date(), kasir, dataOrder.customer||'Umum', gudang, item.id, nameSnap, Number(item.qty), item.harga, 0, Number(item.qty)*item.harga, metode]);
-      var logMut = ensureSheet(ss,'Log_Mutasi'); logMut.appendRow(['MUT-'+new Date().getTime().toString().slice(-6), new Date(), 'KELUAR', item.id, Number(item.qty), 'Penjualan: '+idTrans, kasir]);
-    }
-    audit(sheetId, kasir, 'checkout', { id: idTrans, total: total });
-    lock.releaseLock();
-    return { status:'sukses', idTransaksi: idTrans, total: total };
-  }catch(e){ try{ lock.releaseLock(); }catch(ee){} return { status:'gagal', pesan:e.toString() }; }
-}
-
-// helper ensureSheet
-function ensureSheet(ss, name){ var sh=ss.getSheetByName(name); if(!sh) sh=ss.insertSheet(name); return sh; }
+/* New: simple dashboard stats */
+function getDashboardStats(sheetId){ try{ if(!sheetId) return { status:'error', pesan:'sheetId dibutuhkan' }; var ss = SpreadsheetApp.openById(sheetId); var shP = ss.getSheetByName('Master_Produk'); var shS = ss.getSheetByName('Master_Stok'); var totalProducts = 0; var totalStock = 0; if(shP){ var p = shP.getDataRange().getValues(); totalProducts = Math.max(0,p.length-1); } if(shS){ var s = shS.getDataRange().getValues(); for(var i=1;i<s.length;i++){ totalStock += Number(s[i][3]||0); } } return { status:'ok', totalProducts: totalProducts, totalStock: totalStock }; }catch(e){ return { status:'error', pesan: e.toString() }; } }

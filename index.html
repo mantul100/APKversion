@@ -1,109 +1,157 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JagoPOS • Sistem Kasir Cerdas</title>
-  <link rel="icon" type="image/png" href="favicon-jagopos.png">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>JagoPOS • POS</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
-  <link rel="stylesheet" href="frontend/style.css">
+  <style>
+    body{font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial;background:#f1f5f9}
+    .card{background:#fff;border-radius:12px;box-shadow:0 6px 20px rgba(2,6,23,0.06);padding:12px}
+    .product-card{border-radius:.75rem;padding:12px;background:#fff;transition:all .12s}
+    .product-card:hover{transform:translateY(-4px);box-shadow:0 10px 30px rgba(2,6,23,0.06)}
+    .hidden{display:none}
+  </style>
 </head>
-<body class="bg-slate-50 min-h-screen font-sans">
+<body>
+  <div id="app" class="min-h-screen p-6"></div>
 
-<div id="app-root"></div>
-
-<!-- Core scripts -->
 <script>
-  // API_URL points to your Apps Script web app
-  const API_URL = "https://script.google.com/macros/s/AKfycbyWZvWv1DTxILqNYCVVcyaA-DHSVuIsStpqd20KLly2Tc0ZnSEFie8XlU3lnzvKQicP/exec";
+  // Paste your deployed Apps Script Web App URL here
+  const API_URL = 'PASTE_YOUR_WEBAPP_URL_HERE';
   window.API_URL = API_URL;
-  // Simple global holder for session
   window.JAGO_APP = { session: null };
+
+  async function callAPI(action, data, sheetId){
+    const payload = { action, data: data||{}, sheetId: sheetId || (window.JAGO_APP.session && window.JAGO_APP.session.sheetId) || null };
+    try{
+      const res = await fetch(window.API_URL, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
+      return await res.json();
+    }catch(e){ return { status:'error', pesan:'Network/Fetch error' }; }
+  }
 </script>
-<script src="frontend/idb.js"></script>
-<script src="frontend/pos-offline.js"></script>
-<script src="frontend/pos-ui.js"></script>
-<script src="frontend/login.js"></script>
 
 <script>
-  // mount minimal SPA that shows login or main app
-  (function(){
-    const root = document.getElementById('app-root');
-    function renderLogin(){ root.innerHTML = '';
-      const div = document.createElement('div'); div.className='min-h-screen flex items-center justify-center p-6';
-      div.innerHTML = `
-        <div class="w-full max-w-md bg-white rounded-2xl p-6 shadow">
-          <h2 class="text-2xl font-bold text-slate-800 mb-4">JagoPOS — Login</h2>
-          <input id="loginUser" class="w-full p-3 border rounded mb-3" placeholder="Username or Email">
-          <input id="loginPass" type="password" class="w-full p-3 border rounded mb-4" placeholder="Password">
-          <div class="flex gap-2">
-            <button id="btnLogin" class="flex-1 bg-blue-600 text-white py-3 rounded">Masuk</button>
-            <button id="btnRegister" class="flex-1 border border-slate-200 py-3 rounded">Daftar</button>
-          </div>
-          <div id="loginMsg" class="text-sm text-red-500 mt-3 hidden"></div>
-        </div>`;
-      root.appendChild(div);
-      document.getElementById('btnLogin').onclick = async ()=>{
-        const u = document.getElementById('loginUser').value.trim();
-        const p = document.getElementById('loginPass').value.trim();
-        if(!u||!p){ showLoginMsg('Isi username & password'); return; }
-        showLoginMsg('Mengecek...');
-        try{
-          const res = await callAPI('cekLoginTenant',{username:u,password:p});
-          if(res && res.status==='sukses'){ window.JAGO_APP.session = res; localStorage.setItem('jagopos_data', JSON.stringify(res)); loadApp(); }
-          else showLoginMsg(res.pesan || 'Gagal login');
-        }catch(e){ showLoginMsg('Koneksi gagal'); }
-      };
-      document.getElementById('btnRegister').onclick = ()=>{ renderRegister(); };
-      function showLoginMsg(t){ const el=document.getElementById('loginMsg'); el.innerText=t; el.classList.remove('hidden'); }
-    }
+// Tiny IDB for queue
+(function(){
+  const DB='JagoPOS_IDB_v1',STORE='sync_queue';
+  function open(){ return new Promise((res,rej)=>{ const r=indexedDB.open(DB,1); r.onupgradeneeded=function(e){ const db=e.target.result; if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE,{keyPath:'id',autoIncrement:true}); }; r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+  window.JagoIDB = {
+    add: async function(o){ const db=await open(); return new Promise((res,rej)=>{ const tx=db.transaction(STORE,'readwrite'); const s=tx.objectStore(STORE); s.add(o).onsuccess=()=>res(true); tx.oncomplete=()=>db.close(); tx.onerror=()=>rej(tx.error); }); },
+    getAll: async function(){ const db=await open(); return new Promise((res,rej)=>{ const tx=db.transaction(STORE,'readonly'); const s=tx.objectStore(STORE); const rq=s.getAll(); rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error); tx.oncomplete=()=>db.close(); }); },
+    del: async function(id){ const db=await open(); return new Promise((res,rej)=>{ const tx=db.transaction(STORE,'readwrite'); const s=tx.objectStore(STORE); s.delete(id).onsuccess=()=>res(true); tx.oncomplete=()=>db.close(); tx.onerror=()=>rej(tx.error); }); }
+  };
+})();
+</script>
 
-    function renderRegister(){ root.innerHTML=''; const div=document.createElement('div'); div.className='min-h-screen flex items-center justify-center p-6';
-      div.innerHTML = `
-        <div class="w-full max-w-lg bg-white rounded-2xl p-6 shadow">
-          <h2 class="text-2xl font-bold text-slate-800 mb-4">Daftar Toko Baru</h2>
-          <div class="grid grid-cols-1 gap-3">
-            <input id="regNama" class="p-3 border rounded" placeholder="Nama Toko">
-            <input id="regEmail" class="p-3 border rounded" placeholder="Email Admin">
-            <input id="regUser" class="p-3 border rounded" placeholder="Username Admin">
-            <input id="regPass" type="password" class="p-3 border rounded" placeholder="Password Admin">
-            <input id="regPIN" class="p-3 border rounded" placeholder="Manager PIN (opsional)">
-            <div class="flex gap-2">
-              <button id="btnDoRegister" class="flex-1 bg-emerald-600 text-white py-3 rounded">Daftar</button>
-              <button id="btnBackLogin" class="flex-1 border py-3 rounded">Kembali</button>
-            </div>
-            <div id="regMsg" class="text-sm text-red-500 hidden"></div>
-          </div>
-        </div>`;
-      root.appendChild(div);
-      document.getElementById('btnBackLogin').onclick=()=>renderLogin();
-      document.getElementById('btnDoRegister').onclick=async ()=>{
-        const nama=document.getElementById('regNama').value.trim();
-        const email=document.getElementById('regEmail').value.trim();
-        const user=document.getElementById('regUser').value.trim();
-        const pass=document.getElementById('regPass').value.trim();
-        const pin=document.getElementById('regPIN').value.trim();
-        if(!nama||!email||!user||!pass){ showRegMsg('Lengkapi semua kolom'); return; }
-        showRegMsg('Membuat database...');
-        try{
-          const res = await callAPI('registerTokoBaru',{namaToko:nama,email:email,username:user,password:pass,managerPin:pin});
-          if(res && res.status==='sukses'){ localStorage.setItem('jagopos_data', JSON.stringify({sheetId:res.sheetId, nama:user, role:'Admin', toko:nama})); window.JAGO_APP.session = {sheetId:res.sheetId, nama:user, role:'Admin', toko:nama}; loadApp(); }
-          else showRegMsg(res.pesan||'Gagal buat toko');
-        }catch(e){ showRegMsg('Koneksi gagal'); }
-      };
-      function showRegMsg(t){ const el=document.getElementById('regMsg'); el.innerText=t; el.classList.remove('hidden'); }
-    }
+<script>
+// Offline sync logic
+async function syncQueued(){ try{ const items = await JagoIDB.getAll(); if(!items || !items.length) return; for(const it of items){ try{ const res = await callAPI(it.payload.action, it.payload.data, it.payload.sheetId); if(res && (res.status==='sukses' || res.status==='pending' || res.status==='processed')){ await JagoIDB.del(it.id); } }catch(e){ console.warn('sync item failed',e); } } }catch(e){ console.warn('syncQueued',e); } }
+window.addEventListener('online', syncQueued);
+window.addEventListener('load', ()=>{ if(navigator.onLine) setTimeout(syncQueued,1200); });
+</script>
 
-    function loadApp(){ // simple loader: redirect to main UI already implemented in pos-ui
-      location.href = 'index.html'; // keep same page; pos-ui will detect sessionUser in localStorage
-    }
+<script>
+// App UI
+const root = document.getElementById('app');
+function renderLogin(){ root.innerHTML = `
+  <div class="max-w-md mx-auto">
+    <div class="card">
+      <h2 class="text-2xl font-bold mb-4">JagoPOS • Login / Register</h2>
+      <div class="mb-3"><input id="loginUser" class="w-full p-2 border rounded" placeholder="Username"></div>
+      <div class="mb-3"><input id="loginPass" type="password" class="w-full p-2 border rounded" placeholder="Password"></div>
+      <div class="flex gap-2 mb-3"><button id="btnLogin" class="flex-1 bg-blue-600 text-white py-2 rounded">Masuk</button><button id="btnShowRegister" class="flex-1 border py-2 rounded">Daftar</button></div>
+      <div id="loginMsg" class="text-sm text-red-500 hidden"></div>
+    </div>
+  </div>`;
+  document.getElementById('btnShowRegister').onclick = renderRegister;
+  document.getElementById('btnLogin').onclick = async ()=>{
+    const u=document.getElementById('loginUser').value.trim(); const p=document.getElementById('loginPass').value.trim(); if(!u||!p){ showMsg('loginMsg','Isi username & password'); return; }
+    // require tenant sheet id (prompt) if not in localStorage
+    let sess = JSON.parse(localStorage.getItem('jagopos_data')||'null'); let sheetId = sess && sess.sheetId;
+    if(!sheetId){ sheetId = prompt('Masukkan tenant sheetId (dari register atau pemilik toko)'); if(!sheetId){ showMsg('loginMsg','SheetId diperlukan'); return; } }
+    showMsg('loginMsg','Mencoba login...');
+    const res = await callAPI('cekLoginTenant',{ username:u, password:p }, sheetId);
+    if(res && res.status==='sukses'){ const s = { sheetId: res.sheetId, nama: res.nama, role: res.role }; localStorage.setItem('jagopos_data', JSON.stringify(s)); window.JAGO_APP.session = s; renderMain(); } else showMsg('loginMsg', res.pesan || 'Gagal login');
+  };
+  function showMsg(id,t){ const el=document.getElementById(id); el.innerText=t; el.classList.remove('hidden'); }
+}
 
-    // startup
-    var saved = localStorage.getItem('jagopos_data');
-    if(saved){ try{ window.JAGO_APP.session = JSON.parse(saved); loadApp(); }catch(e){ renderLogin(); } } else renderLogin();
-  })();
+function renderRegister(){ root.innerHTML = `
+  <div class="max-w-lg mx-auto">
+    <div class="card">
+      <h2 class="text-2xl font-bold mb-4">Daftar Toko Baru</h2>
+      <div class="grid gap-3">
+        <input id="regNama" class="p-2 border rounded" placeholder="Nama Toko">
+        <input id="regEmail" class="p-2 border rounded" placeholder="Email Admin">
+        <input id="regUser" class="p-2 border rounded" placeholder="Username Admin">
+        <input id="regPass" type="password" class="p-2 border rounded" placeholder="Password Admin">
+        <input id="regPin" class="p-2 border rounded" placeholder="Manager PIN (opsional)">
+        <div class="flex gap-2"><button id="btnDoRegister" class="flex-1 bg-emerald-600 text-white py-2 rounded">Daftar</button><button id="btnBack" class="flex-1 border py-2 rounded">Kembali</button></div>
+        <div id="regMsg" class="text-sm text-red-500 hidden"></div>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('btnBack').onclick = renderLogin;
+  document.getElementById('btnDoRegister').onclick = async ()=>{
+    const nama=document.getElementById('regNama').value.trim(); const email=document.getElementById('regEmail').value.trim(); const user=document.getElementById('regUser').value.trim(); const pass=document.getElementById('regPass').value.trim(); const pin=document.getElementById('regPin').value.trim(); if(!nama||!email||!user||!pass){ showReg('Lengkapi semua kolom'); return; }
+    showReg('Membuat database...');
+    const res = await callAPI('registerTokoBaru',{ namaToko:nama, email:email, username:user, password:pass, managerPin:pin });
+    if(res && res.status==='sukses'){ const s={ sheetId: res.sheetId, nama: res.admin, role:'Admin', toko:nama }; localStorage.setItem('jagopos_data', JSON.stringify(s)); window.JAGO_APP.session = s; renderMain(); } else showReg(res.pesan || 'Gagal');
+  };
+  function showReg(t){ const el=document.getElementById('regMsg'); el.innerText=t; el.classList.remove('hidden'); }
+}
+
+async function renderMain(){ const s = JSON.parse(localStorage.getItem('jagopos_data')||'null'); if(!s) return renderLogin(); root.innerHTML = `
+  <div class="max-w-6xl mx-auto">
+    <div class="flex justify-between items-center mb-4"><div><h1 class="text-2xl font-bold">JagoPOS • ${s.toko||''}</h1><div class="text-sm text-slate-500">${s.nama||''} • ${s.role||''}</div></div><div><button id="btnLogout" class="px-3 py-2 border rounded mr-2">Logout</button><button id="btnRefresh" class="px-3 py-2 bg-sky-600 text-white rounded">Refresh</button></div></div>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="md:col-span-3 card" id="catArea">Loading katalog...</div>
+      <div class="card" id="cartArea">Cart...</div>
+    </div>
+  </div>`;
+  document.getElementById('btnLogout').onclick = ()=>{ localStorage.removeItem('jagopos_data'); window.location.reload(); };
+  document.getElementById('btnRefresh').onclick = loadCatalog;
+  await loadCatalog(); renderCart();
+}
+
+let CATALOG = [];
+let CART = [];
+
+async function loadCatalog(){ const area=document.getElementById('catArea'); area.innerHTML='Loading...'; const s = JSON.parse(localStorage.getItem('jagopos_data')||'null'); if(!s || !s.sheetId){ area.innerHTML='No sheetId'; return; } const res = await callAPI('getDataInventory', {}, s.sheetId); if(!res || res.status!=='ok'){ area.innerHTML='Katalog kosong atau error: '+(res && res.pesan?res.pesan:''); return; } CATALOG = res.items || []; if(!CATALOG.length){ area.innerHTML='<div class="text-sm text-slate-500">Belum ada produk. Tambahkan via spreadsheet tenant.</div>'; return; }
+  // render grid
+  const html = ['<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">'];
+  for(const p of CATALOG){ const stockMain = (p.stockByGudang && (p.stockByGudang['Gudang Utama']||Object.values(p.stockByGudang)[0]||0)) || 0; html.push(`<div class="product-card p-3">`+`<div class="font-bold text-sm">${escapeHtml(p.nama)}</div><div class="text-xs text-slate-500">ID: ${escapeHtml(p.id)}</div><div class="mt-2 text-lg font-semibold">Rp ${numberFormat(p.hargaUmum)}</div><div class="mt-2 text-sm text-slate-500">Stok: ${stockMain}</div><div class="mt-3"><button data-id="${escapeAttr(p.id)}" class="addBtn px-3 py-1 bg-indigo-600 text-white rounded">Tambah</button></div></div>`); }
+  html.push('</div>'); area.innerHTML = html.join(''); document.querySelectorAll('.addBtn').forEach(b=>b.onclick = ()=>{ addToCart(b.getAttribute('data-id')); }); }
+
+function addToCart(id){ const p = CATALOG.find(x=>String(x.id)===String(id)); if(!p) return alert('Produk tidak ditemukan'); const existing = CART.find(x=>x.id===p.id); if(existing){ existing.qty +=1; } else { CART.push({ id: p.id, nama: p.nama, harga: p.hargaUmum, qty:1 }); } renderCart(); }
+
+function renderCart(){ const area=document.getElementById('cartArea'); if(!area) return; if(!CART.length){ area.innerHTML = '<div class="text-sm text-slate-500">Keranjang kosong</div>'; return; } let total=0; const rows = CART.map((it,idx)=>{ const sub = it.qty * it.harga; total += sub; return `<div class="flex justify-between items-center mb-2"><div><div class="font-semibold">${escapeHtml(it.nama)}</div><div class="text-xs text-slate-500">${it.qty} x Rp ${numberFormat(it.harga)}</div></div><div class="text-right"><div class="font-semibold">Rp ${numberFormat(sub)}</div><div class="mt-1"><button data-idx="${idx}" class="decBtn text-sm px-2 py-1 border rounded">-</button><button data-idx="${idx}" class="incBtn text-sm px-2 py-1 border rounded ml-1">+</button><button data-idx="${idx}" class="rmBtn text-sm px-2 py-1 border rounded ml-1">Hapus</button></div></div></div>`; }).join(''); area.innerHTML = `<div><h3 class="font-bold mb-2">Keranjang</h3>${rows}<div class="mt-4 font-bold">Total: Rp ${numberFormat(total)}</div><div class="mt-3 flex gap-2"><button id="btnCheckoutCash" class="flex-1 bg-green-600 text-white py-2 rounded">Bayar Tunai</button><button id="btnCheckoutNon" class="flex-1 border py-2 rounded">Bayar Non-Tunai</button></div></div>`;
+  document.querySelectorAll('.incBtn').forEach(b=>b.onclick=()=>{ const idx=b.getAttribute('data-idx'); CART[idx].qty+=1; renderCart(); });
+  document.querySelectorAll('.decBtn').forEach(b=>b.onclick=()=>{ const idx=b.getAttribute('data-idx'); if(CART[idx].qty>1) CART[idx].qty-=1; else CART.splice(idx,1); renderCart(); });
+  document.querySelectorAll('.rmBtn').forEach(b=>{ b.onclick=()=>{ const idx=b.getAttribute('data-idx'); CART.splice(idx,1); renderCart(); }; });
+  document.getElementById('btnCheckoutCash').onclick = ()=>checkout('Tunai');
+  document.getElementById('btnCheckoutNon').onclick = ()=>checkout('QRIS');
+}
+
+async function checkout(method){ if(!CART.length) return alert('Keranjang kosong'); const s = JSON.parse(localStorage.getItem('jagopos_data')||'null'); if(!s || !s.sheetId) return alert('SheetId tenant tidak ditemukan.'); const payload = { keranjang: CART.map(i=>({ id:i.id, qty:i.qty, harga:i.harga })), metodeBayar: method, kasir: s.nama }; if(!navigator.onLine){ // queue
+  await JagoIDB.add({ payload:{ action:'prosesCheckout', data: payload, sheetId: s.sheetId }, created: new Date().toISOString() }); alert('Offline: transaksi dimasukkan antrean sync. Akan dikirim saat online.'); CART = []; renderCart(); return; }
+  // online
+  const res = await callAPI('prosesCheckout', payload, s.sheetId);
+  if(!res){ alert('Gagal koneksi'); return; }
+  if(res.status==='sukses'){ alert('Transaksi sukses: '+res.idTransaksi); CART = []; renderCart(); } else if(res.status==='pending'){ // show payment info
+    const payUrl = res.payment_url || ''; const ref = res.payment_reference || ''; const confirm = confirm('Transaksi menunggu pembayaran. Buka URL pembayaran?'); if(confirm && payUrl) window.open(payUrl,'_blank'); // instruct user to complete payment
+    alert('Payment reference: '+ref);
+  } else { alert('Gagal: '+(res.pesan||'unknown')); }
+}
+
+// helpers
+function numberFormat(n){ return (Number(n)||0).toLocaleString('id-ID'); }
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'":"&#39;'}[c]||c; }); }
+function escapeAttr(s){ return String(s||'').replace(/"/g,''); }
+
+// init
+setTimeout(()=>{ const saved=localStorage.getItem('jagopos_data'); if(saved) { window.JAGO_APP.session = JSON.parse(saved); renderMain(); } else renderLogin(); },50);
 </script>
 
 </body>
